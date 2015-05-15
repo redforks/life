@@ -124,11 +124,12 @@ func monitorSignal() {
 	done := make(chan struct{})
 	go func() {
 		Shutdown()
-		<-done
+		done <- struct{}{}
 	}()
 
 	select {
 	case <-done:
+		break
 	case <-time.After(60 * time.Second):
 		log.Printf("[%s] Shutdown timeout", tag)
 	}
