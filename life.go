@@ -117,6 +117,10 @@ func monitorSignal() {
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	log.Printf("[%s] Receive %v signal, start shutdown", tag, <-c)
 
+	go func() {
+		log.Fatalf("[%s] Receive %v again, exit immediately", tag, <-c)
+	}()
+
 	done := make(chan struct{})
 	go func() {
 		Shutdown()
