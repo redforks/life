@@ -49,28 +49,24 @@ const (
 )
 
 var (
-	onStarts, onShutdowns = []LifeCallback{}, []LifeCallback{}
-	state                 stateT
+	state stateT
+	pkgs  = []*pkg{}
 )
+
+type pkg struct {
+	name                string
+	onStart, onShutdown LifeCallback
+}
 
 func currentState() stateT {
 	return stateT(atomic.LoadInt32((*int32)(&state)))
 }
 
-// Register a function called during Staring phase.
-func OnStart(fn LifeCallback) {
+func Register(name string, onStart, onShutdown LifeCallback) {
 	if currentState() != initing {
-		log.Panicf("[%s] Can not register OnStart function in \"%s\" phase", tag, state)
+		log.Panicf("[%s] Can not register package \"%s\" in \"%s\" phase", tag, name, state)
 	}
-	onStarts = append(onStarts, fn)
-}
-
-// Register a function called during shutdown phase.
-func OnShutdown(fn LifeCallback) {
-	if currentState() != initing {
-		log.Panicf("[%s] Can not register OnShutdown function in \"%s\" phase", tag, state)
-	}
-	onShutdowns = append(onShutdowns, fn)
+	pkgs = append(pkgs, &pkg{name, onStart, onShutdown})
 }
 
 // Put phase to starting, Run all registered OnStart() functions, if all
@@ -81,12 +77,18 @@ func Start() {
 	if !atomic.CompareAndSwapInt32((*int32)(&state), int32(initing), int32(starting)) {
 		log.Panicf("[%s] Can not register OnStart function in \"%s\" phase", tag, state)
 	}
-	for _, f := range onStarts {
-		f()
+
+	for _, pkg := range pkgs {
+		log.Printf("[%s] Start package %s", tag, pkg.name)
+		if pkg.onStart != nil {
+			pkg.onStart()
+		}
 	}
+
 	if !atomic.CompareAndSwapInt32((*int32)(&state), int32(starting), int32(running)) {
 		log.Panicf("[%s] Corrputed state, expected %s, but %s", tag, starting, currentState())
 	}
+	log.Printf("[%s] all packages started, ready to serve", tag)
 }
 
 // Put phase to shutdown, Run all registered OnShutdown() function in reserved order.
@@ -97,16 +99,20 @@ func Shutdown() {
 		return
 	}
 
-	for i := len(onShutdowns) - 1; i >= 0; i-- {
-		onShutdowns[i]()
+	for i := len(pkgs) - 1; i >= 0; i-- {
+		log.Printf("[%s] Shutdown package %s", tag, pkgs[i].name)
+		if pkgs[i].onShutdown != nil {
+			pkgs[i].onShutdown()
+		}
 	}
+
+	log.Printf("[%s] all packages shutdown, ready to exit", tag)
 }
 
 func init() {
 	reset.Register(nil, func() {
 		state = initing
-		onStarts = onStarts[:0]
-		onShutdowns = onShutdowns[:0]
+		pkgs = pkgs[:0]
 	})
 
 	go monitorSignal()

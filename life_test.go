@@ -37,54 +37,55 @@ var _ = bdd.Describe("life", func() {
 	})
 
 	bdd.It("OnStart One", func() {
-		OnStart(func() {
+		Register("pkg1", func() {
 			appendLog("pkg1")
 			assert.Equal(t(), starting, state)
-		})
+		}, nil)
 		Start()
 		assert.Equal(t(), running, currentState())
 		assertLog("pkg1\n")
 	})
 
 	bdd.It("OnStart two", func() {
-		OnStart(newLogFunc("pkg1"))
-		OnStart(newLogFunc("pkg2"))
+		Register("pkg1", newLogFunc("pkg1"), nil)
+		Register("pkg2", newLogFunc("pkg2"), nil)
+		Register("pkg3", nil, nil)
 		Start()
 		assertLog("pkg1\npkg2\n")
 	})
 
-	bdd.Context("Call OnStart() in wrong phase", func() {
+	bdd.Context("Register() in wrong phase", func() {
 
 		bdd.It("Running", func() {
 			Start()
 			tassert.Panics(t(), func() {
-				OnStart(newLogFunc("pkg1"))
-			}, "[life] Can not register OnStart function in \"running\" phase")
+				Register("pkg1", nil, nil)
+			}, "[life] Can not register package \"pkg1\" in \"running\" phase")
 		})
 
 		bdd.It("Starting", func() {
-			OnStart(func() {
-				OnStart(func() {})
-			})
+			Register("pkg2", func() {
+				Register("pkg1", func() {}, nil)
+			}, nil)
 			tassert.Panics(t(), func() {
 				Start()
-			}, "[life] Can not register OnStart function in \"starting\" phase")
+			}, "[life] Can not register package \"pkg1\" in \"starting\" phase")
 		})
 
 		bdd.It("Shutdown", func() {
-			OnShutdown(func() {
-				OnStart(func() {})
+			Register("pkg2", nil, func() {
+				Register("pkg1", nil, nil)
 			})
 			tassert.Panics(t(), func() {
 				state = running
 				Shutdown()
-			}, "[life] Can not register OnStart function in \"shutdown\" phase")
+			}, "[life] Can not register package \"pkg1\" in \"shutdown\" phase")
 		})
 
 	})
 
 	bdd.It("OnShutdown one", func() {
-		OnShutdown(func() {
+		Register("pkg1", nil, func() {
 			appendLog("pkg1")
 			assert.Equal(t(), shutdown, state)
 		})
@@ -95,28 +96,12 @@ var _ = bdd.Describe("life", func() {
 	})
 
 	bdd.It("OnShutdown two", func() {
-		OnShutdown(newLogFunc("pkg1"))
-		OnShutdown(newLogFunc("pkg2"))
+		Register("pkg1", nil, newLogFunc("pkg1"))
+		Register("pkg11", nil, nil)
+		Register("pkg2", nil, newLogFunc("pkg2"))
 		state = running
 		Shutdown()
 		assertLog("pkg2\npkg1\n")
-	})
-
-	bdd.Context("OnShutdown if not in running state", func() {
-
-		bdd.BeforeEach(func() {
-			OnShutdown(newLogFunc("pkg1"))
-		})
-
-		bdd.AfterEach(func() {
-			assert.Equal(t(), shutdown, state)
-			assertLog("")
-		})
-
-		bdd.It("In init state", func() {
-			Shutdown()
-		})
-
 	})
 
 })
