@@ -39,9 +39,9 @@ type stateT int32
 
 const (
 	// life phase constants
-	initing stateT = iota
-	starting
-	running
+	Initing stateT = iota
+	Starting
+	Running
 	shutdown
 
 	// tag for log
@@ -58,12 +58,12 @@ type pkg struct {
 	onStart, onShutdown LifeCallback
 }
 
-func currentState() stateT {
+func State() stateT {
 	return stateT(atomic.LoadInt32((*int32)(&state)))
 }
 
 func Register(name string, onStart, onShutdown LifeCallback) {
-	if currentState() != initing {
+	if State() != Initing {
 		log.Panicf("[%s] Can not register package \"%s\" in \"%s\" phase", tag, name, state)
 	}
 	pkgs = append(pkgs, &pkg{name, onStart, onShutdown})
@@ -74,7 +74,7 @@ func Register(name string, onStart, onShutdown LifeCallback) {
 // If any OnStart function panic, Start() won't recover, it is normal to panic
 // and exit the app during starting.
 func Start() {
-	if !atomic.CompareAndSwapInt32((*int32)(&state), int32(initing), int32(starting)) {
+	if !atomic.CompareAndSwapInt32((*int32)(&state), int32(Initing), int32(Starting)) {
 		log.Panicf("[%s] Can not register OnStart function in \"%s\" phase", tag, state)
 	}
 
@@ -85,15 +85,15 @@ func Start() {
 		}
 	}
 
-	if !atomic.CompareAndSwapInt32((*int32)(&state), int32(starting), int32(running)) {
-		log.Panicf("[%s] Corrputed state, expected %s, but %s", tag, starting, currentState())
+	if !atomic.CompareAndSwapInt32((*int32)(&state), int32(Starting), int32(Running)) {
+		log.Panicf("[%s] Corrputed state, expected %s, but %s", tag, Starting, State())
 	}
 	log.Printf("[%s] all packages started, ready to serve", tag)
 }
 
 // Put phase to shutdown, Run all registered OnShutdown() function in reserved order.
 func Shutdown() {
-	if !atomic.CompareAndSwapInt32((*int32)(&state), int32(running), int32(shutdown)) {
+	if !atomic.CompareAndSwapInt32((*int32)(&state), int32(Running), int32(shutdown)) {
 		// app can shutdown at any phase, but if not in correct phase, doing nothing
 		atomic.StoreInt32((*int32)(&state), int32(shutdown))
 		return
@@ -111,7 +111,7 @@ func Shutdown() {
 
 func init() {
 	reset.Register(nil, func() {
-		state = initing
+		state = Initing
 		pkgs = pkgs[:0]
 	})
 

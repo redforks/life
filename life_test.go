@@ -39,10 +39,10 @@ var _ = bdd.Describe("life", func() {
 	bdd.It("OnStart One", func() {
 		Register("pkg1", func() {
 			appendLog("pkg1")
-			assert.Equal(t(), starting, state)
+			assert.Equal(t(), Starting, state)
 		}, nil)
 		Start()
-		assert.Equal(t(), running, currentState())
+		assert.Equal(t(), Running, State())
 		assertLog("pkg1\n")
 	})
 
@@ -77,7 +77,7 @@ var _ = bdd.Describe("life", func() {
 				Register("pkg1", nil, nil)
 			})
 			tassert.Panics(t(), func() {
-				state = running
+				state = Running
 				Shutdown()
 			}, "[life] Can not register package \"pkg1\" in \"shutdown\" phase")
 		})
@@ -89,7 +89,7 @@ var _ = bdd.Describe("life", func() {
 			appendLog("pkg1")
 			assert.Equal(t(), shutdown, state)
 		})
-		state = running
+		state = Running
 		Shutdown()
 		assertLog("pkg1\n")
 		assert.Equal(t(), shutdown, state)
@@ -99,7 +99,7 @@ var _ = bdd.Describe("life", func() {
 		Register("pkg1", nil, newLogFunc("pkg1"))
 		Register("pkg11", nil, nil)
 		Register("pkg2", nil, newLogFunc("pkg2"))
-		state = running
+		state = Running
 		Shutdown()
 		assertLog("pkg2\npkg1\n")
 	})
