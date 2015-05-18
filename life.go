@@ -111,6 +111,7 @@ func Shutdown() {
 
 func init() {
 	reset.Register(nil, func() {
+		Shutdown()
 		state = Initing
 		pkgs = pkgs[:0]
 	})
