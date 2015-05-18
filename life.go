@@ -18,19 +18,20 @@
 //  correct order. Keep calling of Start() inside the package itself, clean and elegant.
 //  Shutdown phase enforces all package and go routines exit properly, without
 //  unpredictable state and corrupting data.
-//
-//  TODO: OnStart() and OnShutdown() called in golang package dependency order, not
-//  support if the package actual dependency not match.
 package life
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"spork/testing/reset"
+	"strings"
 	"sync/atomic"
 	"syscall"
 	"time"
+
+	"github.com/stevenle/topsort"
 )
 
 type LifeCallback func()
@@ -56,17 +57,22 @@ var (
 type pkg struct {
 	name                string
 	onStart, onShutdown LifeCallback
+	depends             []string
 }
 
 func State() stateT {
 	return stateT(atomic.LoadInt32((*int32)(&state)))
 }
 
-func Register(name string, onStart, onShutdown LifeCallback) {
+// Register a package, optionally includes depended packages. If not provides
+// depended package, it will run as registered order. Depends need not exist,
+// it will check and sort in Start().
+func Register(name string, onStart, onShutdown LifeCallback, depends ...string) {
 	if State() != Initing {
 		log.Panicf("[%s] Can not register package \"%s\" in \"%s\" phase", tag, name, state)
 	}
-	pkgs = append(pkgs, &pkg{name, onStart, onShutdown})
+
+	pkgs = append(pkgs, &pkg{name, onStart, onShutdown, depends})
 }
 
 // Put phase to starting, Run all registered OnStart() functions, if all
@@ -77,6 +83,8 @@ func Start() {
 	if !atomic.CompareAndSwapInt32((*int32)(&state), int32(Initing), int32(Starting)) {
 		log.Panicf("[%s] Can not register OnStart function in \"%s\" phase", tag, state)
 	}
+
+	pkgs = sortByDependency(pkgs)
 
 	for _, pkg := range pkgs {
 		log.Printf("[%s] Start package %s", tag, pkg.name)
@@ -107,6 +115,64 @@ func Shutdown() {
 	}
 
 	log.Printf("[%s] all packages shutdown, ready to exit", tag)
+}
+
+func sortByDependency(pkgs []*pkg) []*pkg {
+	graph := topsort.NewGraph()
+	pkgMap := make(map[string]*pkg, len(pkgs))
+	added := make(map[string]bool)
+
+	for _, p := range pkgs {
+		pkgMap[p.name] = p
+		graph.AddNode(p.name)
+	}
+
+	for _, p := range pkgs {
+		for _, name := range p.depends {
+			if _, exist := pkgMap[name]; !exist {
+				log.Printf("[%s] Warning: \"%s\" depends on not exist package \"%s\"", tag, p.name, name)
+			}
+			graph.AddEdge(p.name, name)
+		}
+	}
+
+	result := make([]*pkg, 0, len(pkgs))
+	for _, p := range pkgs {
+		if noIncoming(pkgs, p) {
+			depends, err := graph.TopSort(p.name)
+			if err != nil {
+				log.Panicf("[%s] %v", tag, err)
+			}
+			for _, p := range depends {
+				if !added[p] {
+					result = append(result, pkgMap[p])
+					added[p] = true
+				}
+			}
+		}
+	}
+
+	if len(result) != len(pkgs) {
+		msg := ""
+		for _, p := range pkgs {
+			if len(p.depends) != 0 {
+				msg += fmt.Sprintf("\n\t%s -> %s", p.name, strings.Join(p.depends, ", "))
+			}
+		}
+		log.Panicf("[%s] Loop dependency detected%s", tag, msg)
+	}
+	return result
+}
+
+func noIncoming(pkgs []*pkg, p *pkg) bool {
+	for _, v := range pkgs {
+		for _, pkgName := range v.depends {
+			if p.name == pkgName {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 func init() {

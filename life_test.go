@@ -104,4 +104,37 @@ var _ = bdd.Describe("life", func() {
 		assertLog("pkg2\npkg1\n")
 	})
 
+	bdd.Context("Sort by dependency", func() {
+
+		bdd.It("Two pkgs", func() {
+			Register("pkg2", newLogFunc("pkg2"), newLogFunc("pkg2"), "pkg1")
+			Register("pkg1", newLogFunc("pkg1"), newLogFunc("pkg1"))
+			Start()
+			assertLog("pkg1\npkg2\n")
+			Shutdown()
+			assertLog("pkg2\npkg1\n")
+		})
+
+		bdd.It("Case 2", func() {
+			Register("a", newLogFunc("a"), nil, "b")
+			Register("b", newLogFunc("b"), nil)
+			Register("c", newLogFunc("c"), nil, "b")
+			Start()
+			assertLog("b\na\nc\n")
+		})
+
+		bdd.XIt("Depends not exist, need assert on log", func() {
+			Register("pkg2", nil, nil, "not_exist")
+			tassert.Panics(t(), Start, "[life] \"pkg2\" depends on not exist package \"not_exist\"")
+		})
+
+		bdd.It("Loop dependency", func() {
+			Register("pkg1", nil, nil, "pkg2", "pkg3")
+			Register("pkg2", nil, nil, "pkg1")
+			Register("pkg3", nil, nil)
+			tassert.Panics(t(), Start, "[life] Loop dependency detected\n\tpkg1 -> pkg2, pkg3\n\tpkg2 -> pkg1")
+		})
+
+	})
+
 })
