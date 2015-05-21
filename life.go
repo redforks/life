@@ -43,7 +43,7 @@ const (
 	Initing stateT = iota
 	Starting
 	Running
-	shutdown
+	Shutingdown
 
 	// tag for log
 	tag = "life"
@@ -101,9 +101,9 @@ func Start() {
 
 // Put phase to shutdown, Run all registered OnShutdown() function in reserved order.
 func Shutdown() {
-	if !atomic.CompareAndSwapInt32((*int32)(&state), int32(Running), int32(shutdown)) {
+	if !atomic.CompareAndSwapInt32((*int32)(&state), int32(Running), int32(Shutingdown)) {
 		// app can shutdown at any phase, but if not in correct phase, doing nothing
-		atomic.StoreInt32((*int32)(&state), int32(shutdown))
+		atomic.StoreInt32((*int32)(&state), int32(Shutingdown))
 		return
 	}
 
