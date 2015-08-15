@@ -25,7 +25,6 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"spork/testing/reset"
 	"strings"
 	"sync/atomic"
 	"syscall"
@@ -175,13 +174,16 @@ func noIncoming(pkgs []*pkg, p *pkg) bool {
 	return true
 }
 
-func init() {
-	reset.Register(nil, func() {
-		Shutdown()
-		state = Initing
-		pkgs = pkgs[:0]
-	})
+// Used in unit tests to reset life package by reset internally, never call this functions.
+func Reset() {
+	// can not use reset.Register(), because we must first reset life package,
+	// then reset other packages.
+	Shutdown()
+	state = Initing
+	pkgs = pkgs[:0]
+}
 
+func init() {
 	go monitorSignal()
 }
 
