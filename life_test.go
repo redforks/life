@@ -1,6 +1,7 @@
-package life
+package life_test
 
 import (
+	. "spork/life"
 	"spork/testing/reset"
 	"spork/testing/tassert"
 
@@ -39,7 +40,7 @@ var _ = bdd.Describe("life", func() {
 	bdd.It("OnStart One", func() {
 		Register("pkg1", func() {
 			appendLog("pkg1")
-			assert.Equal(t(), Starting, state)
+			assert.Equal(t(), Starting, State())
 		}, nil)
 		Start()
 		assert.Equal(t(), Running, State())
@@ -76,8 +77,8 @@ var _ = bdd.Describe("life", func() {
 			Register("pkg2", nil, func() {
 				Register("pkg1", nil, nil)
 			})
+			Start()
 			tassert.Panics(t(), func() {
-				state = Running
 				Shutdown()
 			}, "[life] Can not register package \"pkg1\" in \"shutdown\" phase")
 		})
@@ -87,19 +88,19 @@ var _ = bdd.Describe("life", func() {
 	bdd.It("OnShutdown one", func() {
 		Register("pkg1", nil, func() {
 			appendLog("pkg1")
-			assert.Equal(t(), Shutingdown, state)
+			assert.Equal(t(), Shutingdown, State())
 		})
-		state = Running
+		Start()
 		Shutdown()
 		assertLog("pkg1\n")
-		assert.Equal(t(), Shutingdown, state)
+		assert.Equal(t(), Shutingdown, State())
 	})
 
 	bdd.It("OnShutdown two", func() {
 		Register("pkg1", nil, newLogFunc("pkg1"))
 		Register("pkg11", nil, nil)
 		Register("pkg2", nil, newLogFunc("pkg2"))
-		state = Running
+		Start()
 		Shutdown()
 		assertLog("pkg2\npkg1\n")
 	})
@@ -121,11 +122,6 @@ var _ = bdd.Describe("life", func() {
 			Register("c", newLogFunc("c"), nil, "b")
 			Start()
 			assertLog("b\na\nc\n")
-		})
-
-		bdd.XIt("Depends not exist, need assert on log", func() {
-			Register("pkg2", nil, nil, "not_exist")
-			tassert.Panics(t(), Start, "[life] \"pkg2\" depends on not exist package \"not_exist\"")
 		})
 
 		bdd.It("Loop dependency", func() {
