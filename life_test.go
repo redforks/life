@@ -37,6 +37,13 @@ var _ = bdd.Describe("life", func() {
 		reset.Disable()
 	})
 
+	bdd.It("Register duplicate", func() {
+		Register("pkg1", nil, nil)
+		tassert.Panics(t(), func() {
+			Register("pkg1", nil, nil)
+		}, "[life] package 'pkg1' already registered")
+	})
+
 	bdd.It("OnStart One", func() {
 		Register("pkg1", func() {
 			appendLog("pkg1")

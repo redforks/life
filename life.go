@@ -71,6 +71,11 @@ func Register(name string, onStart, onShutdown LifeCallback, depends ...string) 
 		log.Panicf("[%s] Can not register package \"%s\" in \"%s\" phase", tag, name, state)
 	}
 
+	for _, p := range pkgs {
+		if p.name == name {
+			log.Panicf("[%s] package '%s' already registered", tag, name)
+		}
+	}
 	pkgs = append(pkgs, &pkg{name, onStart, onShutdown, depends})
 }
 
