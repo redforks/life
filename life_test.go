@@ -1,8 +1,6 @@
-package life_test
+package life
 
 import (
-	. "spork/life"
-	"spork/testing/reset"
 	"spork/testing/tassert"
 
 	bdd "github.com/onsi/ginkgo"
@@ -29,13 +27,7 @@ var _ = bdd.Describe("life", func() {
 		}
 	)
 
-	bdd.BeforeEach(func() {
-		reset.Enable()
-	})
-
-	bdd.AfterEach(func() {
-		reset.Disable()
-	})
+	bdd.AfterEach(Reset)
 
 	bdd.It("Register duplicate", func() {
 		Register("pkg1", nil, nil)

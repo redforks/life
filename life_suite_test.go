@@ -1,4 +1,4 @@
-package life_test
+package life
 
 import (
 	. "github.com/onsi/ginkgo"
