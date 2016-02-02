@@ -45,7 +45,7 @@ var _ = bdd.Describe("life", func() {
 			Start()
 			tassert.Panics(t(), func() {
 				Register("pkg1", nil, nil)
-			}, "[life] Can not register package \"pkg1\" in \"running\" phase")
+			}, "[life] Can not register package \"pkg1\" in \"Running\" phase")
 		})
 
 		bdd.It("Starting", func() {
@@ -54,7 +54,7 @@ var _ = bdd.Describe("life", func() {
 			}, nil)
 			tassert.Panics(t(), func() {
 				Start()
-			}, "[life] Can not register package \"pkg1\" in \"starting\" phase")
+			}, "[life] Can not register package \"pkg1\" in \"Starting\" phase")
 		})
 
 		bdd.It("Shutdown", func() {
@@ -64,7 +64,7 @@ var _ = bdd.Describe("life", func() {
 			Start()
 			tassert.Panics(t(), func() {
 				Shutdown()
-			}, "[life] Can not register package \"pkg1\" in \"shutdown\" phase")
+			}, "[life] Can not register package \"pkg1\" in \"Shutingdown\" phase")
 		})
 
 	})
