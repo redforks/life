@@ -84,6 +84,8 @@ func Register(name string, onStart, onShutdown LifeCallback, depends ...string) 
 // If any OnStart function panic, Start() won't recover, it is normal to panic
 // and exit the app during starting.
 func Start() {
+	callHooks(BeforeStarting)
+
 	if !atomic.CompareAndSwapInt32((*int32)(&state), int32(Initing), int32(Starting)) {
 		log.Panicf("[%s] Can not register OnStart function in \"%s\" phase", tag, state)
 	}
@@ -96,6 +98,8 @@ func Start() {
 			pkg.onStart()
 		}
 	}
+
+	callHooks(BeforeRunning)
 
 	if !atomic.CompareAndSwapInt32((*int32)(&state), int32(Starting), int32(Running)) {
 		log.Panicf("[%s] Corrputed state, expected %s, but %s", tag, Starting, State())
@@ -111,6 +115,7 @@ func Shutdown() {
 		return
 	}
 
+	callHooks(BeforeShutingdown)
 	for i := len(pkgs) - 1; i >= 0; i-- {
 		log.Printf("[%s] Shutdown package %s", tag, pkgs[i].name)
 		if pkgs[i].onShutdown != nil {
