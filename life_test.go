@@ -8,24 +8,9 @@ import (
 )
 
 var _ = bdd.Describe("life", func() {
-	var (
-		log = ""
-
-		appendLog = func(msg string) {
-			log += msg + "\n"
-		}
-
-		assertLog = func(expected string) {
-			assert.Equal(t(), expected, log)
-			log = ""
-		}
-
-		newLogFunc = func(msg string) LifeCallback {
-			return func() {
-				appendLog(msg)
-			}
-		}
-	)
+	bdd.BeforeEach(func() {
+		slog = ""
+	})
 
 	bdd.AfterEach(Reset)
 
