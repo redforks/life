@@ -1,7 +1,9 @@
 package life
 
 import (
+	"fmt"
 	"spork/testing/tassert"
+	"time"
 
 	bdd "github.com/onsi/ginkgo"
 	"github.com/stretchr/testify/assert"
@@ -23,8 +25,11 @@ var _ = bdd.Describe("life", func() {
 
 	bdd.It("OnStart One", func() {
 		Register("pkg1", func() {
+			fmt.Print("start 1")
 			appendLog("pkg1")
+			fmt.Print("start 2")
 			assert.Equal(t(), Starting, State())
+			fmt.Print("start 3")
 		}, nil)
 		Start()
 		assert.Equal(t(), Running, State())
@@ -77,7 +82,7 @@ var _ = bdd.Describe("life", func() {
 		Start()
 		Shutdown()
 		assertLog("pkg1\n")
-		assert.Equal(t(), Shutingdown, State())
+		assert.Equal(t(), halt, State())
 	})
 
 	bdd.It("OnShutdown two", func() {
@@ -87,6 +92,81 @@ var _ = bdd.Describe("life", func() {
 		Start()
 		Shutdown()
 		assertLog("pkg2\npkg1\n")
+	})
+
+	bdd.Context("WaitToEnd", func() {
+		var (
+			wait  chan struct{}
+			start time.Time
+		)
+
+		bdd.BeforeEach(func() {
+			wait = make(chan struct{})
+		})
+
+		var startWait = func() {
+			go func() {
+				WaitToEnd()
+				close(wait)
+			}()
+			start = time.Now()
+		}
+
+		var assertShutdown = func(delayMin, delayMax time.Duration) {
+			select {
+			case <-wait:
+				assert.True(t(), time.Now().Sub(start) > delayMin)
+			case <-time.After(delayMax):
+				assert.Fail(t(), "WaitToEnd() timeout")
+			}
+		}
+
+		bdd.It("block until shutdown", func() {
+			Register("pkg", nil, func() {
+				time.Sleep(5 * time.Millisecond)
+			})
+			Start()
+
+			startWait()
+			Shutdown()
+			assertShutdown(4*time.Millisecond, 10*time.Millisecond)
+		})
+
+		bdd.It("During shutdown", func() {
+			Register("pkg", nil, func() {
+				time.Sleep(5 * time.Millisecond)
+			})
+
+			Start()
+			go Shutdown()
+			time.Sleep(time.Millisecond)
+			startWait()
+			assertShutdown(3*time.Millisecond, 10*time.Millisecond)
+		})
+
+		bdd.It("after shutdown", func() {
+			Start()
+			Shutdown()
+			startWait()
+			assertShutdown(0, 5*time.Millisecond)
+		})
+
+		bdd.It("Shutdown wait for ongoing shutdown request", func() {
+			Register("pkg", nil, func() {
+				time.Sleep(5 * time.Millisecond)
+			})
+
+			Start()
+			go Shutdown()
+			time.Sleep(time.Millisecond)
+
+			go func() {
+				Shutdown()
+				close(wait)
+			}()
+			assertShutdown(3*time.Millisecond, 10*time.Millisecond)
+		})
+
 	})
 
 	bdd.Context("Sort by dependency", func() {

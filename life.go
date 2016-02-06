@@ -26,6 +26,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"syscall"
 	"time"
@@ -43,14 +44,26 @@ const (
 	Starting
 	Running
 	Shutingdown
+	// state after Shutingdown complete
+	halt
 
 	// tag for log
 	tag = "life"
 )
 
 var (
+	l     = sync.Mutex{}
 	state stateT
-	pkgs  = []*pkg{}
+
+	// copy of state, returned by State() to allow calling State() function without
+	// dead-lock. golang do not allow nested Mutex, use `l' variable inside State()
+	// will cause nested lock if State() was called inside a callback, such as
+	// onStart.
+	lastState int32
+	pkgs      = []*pkg{}
+
+	// shutdown chann to notify WaitToEnd. Channel closed on shutdown complete.
+	shutdown = make(chan struct{})
 )
 
 type pkg struct {
@@ -59,16 +72,24 @@ type pkg struct {
 	depends             []string
 }
 
+// State return current life phase.
 func State() stateT {
-	return stateT(atomic.LoadInt32((*int32)(&state)))
+	return stateT(atomic.LoadInt32(&lastState))
+}
+
+func setState(st stateT) {
+	// Must called inside `l.Lock()'
+	state = st
+	atomic.StoreInt32(&lastState, int32(st))
 }
 
 // Register a package, optionally includes depended packages. If not provides
 // depended package, it will run as registered order. Depends need not exist,
 // it will check and sort in Start().
 func Register(name string, onStart, onShutdown LifeCallback, depends ...string) {
-	if State() != Initing {
-		log.Panicf("[%s] Can not register package \"%s\" in \"%s\" phase", tag, name, state)
+	st := State()
+	if st != Initing {
+		log.Panicf("[%s] Can not register package \"%s\" in \"%s\" phase", tag, name, st)
 	}
 
 	for _, p := range pkgs {
@@ -84,36 +105,49 @@ func Register(name string, onStart, onShutdown LifeCallback, depends ...string) 
 // If any OnStart function panic, Start() won't recover, it is normal to panic
 // and exit the app during starting.
 func Start() {
+	l.Lock()
+	defer l.Unlock()
+
+	if state != Initing {
+		log.Panicf("[%s] Can not start in \"%s\" phase", tag, state)
+	}
+	setState(Starting)
+
 	callHooks(BeforeStarting)
 
-	if !atomic.CompareAndSwapInt32((*int32)(&state), int32(Initing), int32(Starting)) {
-		log.Panicf("[%s] Can not register OnStart function in \"%s\" phase", tag, state)
-	}
-
 	pkgs = sortByDependency(pkgs)
-
 	for _, pkg := range pkgs {
 		log.Printf("[%s] Start package %s", tag, pkg.name)
 		if pkg.onStart != nil {
 			pkg.onStart()
 		}
+		log.Printf("[%s] end Start package %s", tag, pkg.name)
 	}
 
 	callHooks(BeforeRunning)
-
-	if !atomic.CompareAndSwapInt32((*int32)(&state), int32(Starting), int32(Running)) {
-		log.Panicf("[%s] Corrputed state, expected %s, but %s", tag, Starting, State())
-	}
 	log.Printf("[%s] all packages started, ready to serve", tag)
+	setState(Running)
 }
 
 // Put phase to shutdown, Run all registered OnShutdown() function in reserved order.
 func Shutdown() {
-	if !atomic.CompareAndSwapInt32((*int32)(&state), int32(Running), int32(Shutingdown)) {
-		// app can shutdown at any phase, but if not in correct phase, doing nothing
-		atomic.StoreInt32((*int32)(&state), int32(Shutingdown))
+	l.Lock()
+	defer func() {
+		// always set exit state to halt
+		setState(halt)
+		l.Unlock()
+	}()
+
+	switch state {
+	case Running:
+	case Shutingdown:
+		log.Fatalf("[%s] corrupt internal state: %s", tag, state)
+	default:
+		// app can shutdown at any phase
 		return
 	}
+
+	setState(Shutingdown)
 
 	callHooks(BeforeShutingdown)
 	for i := len(pkgs) - 1; i >= 0; i-- {
@@ -124,6 +158,25 @@ func Shutdown() {
 	}
 
 	log.Printf("[%s] all packages shutdown, ready to exit", tag)
+	close(shutdown)
+}
+
+// WaitToEnd block calling goroutine until safely Shutdown. Can only be called
+// in running and afterwards phase.
+func WaitToEnd() {
+	l.Lock()
+
+	switch state {
+	case halt:
+	case Running, Starting, Initing:
+		l.Unlock()
+		<-shutdown
+	default:
+		// Shutingdown can not visible, it is only in Shutdown function
+		log.Fatalf("[%s] Unknown state: %s", tag, state)
+	}
+
+	l.Unlock()
 }
 
 func sortByDependency(pkgs []*pkg) []*pkg {
@@ -189,8 +242,9 @@ func Reset() {
 	// can not use reset.Register(), because we must first reset life package,
 	// then reset other packages.
 	Shutdown()
-	state = Initing
+	setState(Initing)
 	pkgs = pkgs[:0]
+	shutdown = make(chan struct{})
 }
 
 func init() {
