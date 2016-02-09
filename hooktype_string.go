@@ -4,9 +4,9 @@ package life
 
 import "fmt"
 
-const _hookType_name = "BeforeStartingBeforeRunningBeforeShutingdown"
+const _hookType_name = "BeforeStartingBeforeRunningBeforeShutingdownAbort"
 
-var _hookType_index = [...]uint8{0, 14, 27, 44}
+var _hookType_index = [...]uint8{0, 14, 27, 44, 49}
 
 func (i hookType) String() string {
 	if i < 0 || i+1 >= hookType(len(_hookType_index)) {

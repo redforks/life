@@ -4,9 +4,9 @@ package life
 
 import "fmt"
 
-const _stateT_name = "InitingStartingRunningShutingdown"
+const _stateT_name = "InitingStartingRunningShutingdownhalt"
 
-var _stateT_index = [...]uint8{0, 7, 15, 22, 33}
+var _stateT_index = [...]uint8{0, 7, 15, 22, 33, 37}
 
 func (i stateT) String() string {
 	if i < 0 || i+1 >= stateT(len(_stateT_index)) {
