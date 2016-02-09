@@ -5,6 +5,7 @@ package life
 import (
 	"log"
 	"sort"
+	"time"
 )
 
 // HookFunc called when a hook event occurred. See hookType constants.
@@ -34,7 +35,8 @@ type hook struct {
 }
 
 var (
-	hooks [][]*hook = make([][]*hook, 4)
+	hooks    [][]*hook = make([][]*hook, 4)
+	testMode           = false
 )
 
 // RegisterHook register a function that executed when typ hook event occurred. Name is
@@ -56,12 +58,26 @@ func RegisterHook(name string, order int, typ hookType, fn HookFunc) {
 }
 
 func callHooks(typ hookType) {
-	items := hooks[typ]
-	sort.Sort(sortHook(items))
-	for _, hook := range items {
-		log.Printf("[%s] Execute %s hook: %s", tag, typ, hook.name)
-		hook.fn()
-		log.Printf("[%s] Done %s", tag, hook.name)
+	wait := make(chan interface{})
+	go func() {
+		items := hooks[typ]
+		sort.Sort(sortHook(items))
+		for _, hook := range items {
+			log.Printf("[%s] Execute %s hook: %s", tag, typ, hook.name)
+			hook.fn()
+			log.Printf("[%s] Done %s", tag, hook.name)
+		}
+		close(wait)
+	}()
+
+	timeout := 30 * time.Second
+	if testMode { // can not import and use spork.TestMode
+		timeout = 5 * time.Millisecond
+	}
+	select {
+	case <-wait:
+	case <-time.After(timeout):
+		log.Printf("[%s] %s hook timeout", tag, typ)
 	}
 }
 

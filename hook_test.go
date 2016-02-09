@@ -4,6 +4,7 @@ package life
 import (
 	"os"
 	"strconv"
+	"time"
 
 	bdd "github.com/onsi/ginkgo"
 	"github.com/stretchr/testify/assert"
@@ -13,6 +14,14 @@ var _ = bdd.Describe("hook", func() {
 	var (
 		oldHooks [][]*hook
 	)
+
+	bdd.BeforeSuite(func() {
+		testMode = true
+	})
+
+	bdd.AfterSuite(func() {
+		testMode = false
+	})
 
 	bdd.BeforeEach(func() {
 		slog = ""
@@ -83,6 +92,31 @@ var _ = bdd.Describe("hook", func() {
 		Start()
 		assert.Panics(t(), Shutdown)
 		assertLog("onStart\nfoo\nbar\nExit 11\n")
+	})
+
+	bdd.It("Hooks timeout", func() {
+		hold := make(chan interface{})
+		wait := make(chan interface{})
+
+		Register("panic", func() {
+			panic("foo")
+		}, nil)
+
+		RegisterHook("bar", 1, Abort, func() {
+			<-hold
+		})
+
+		go func() {
+			assert.Panics(t(), Start)
+			close(wait)
+		}()
+
+		select {
+		case <-wait:
+		case <-time.After(10 * time.Millisecond):
+			assert.Fail(t(), "abort hooks timeout")
+		}
+		close(hold)
 	})
 
 	bdd.It("Sort by order", func() {
