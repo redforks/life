@@ -31,6 +31,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/redforks/errors"
 	"github.com/stevenle/topsort"
 )
 
@@ -112,7 +113,7 @@ func Start() {
 	defer func() {
 		l.Unlock()
 		if err := recover(); err != nil {
-			log.Print(err)
+			errors.Handle(nil, err)
 			callHooks(Abort)
 			exit(10)
 			panic(err)
@@ -149,7 +150,7 @@ func Shutdown() {
 		l.Unlock()
 
 		if err := recover(); err != nil {
-			log.Print(err)
+			errors.Handle(nil, err)
 			callHooks(Abort)
 			exit(11)
 			panic(err)

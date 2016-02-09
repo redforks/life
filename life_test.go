@@ -6,7 +6,10 @@ import (
 	"strconv"
 	"time"
 
+	"golang.org/x/net/context"
+
 	bdd "github.com/onsi/ginkgo"
+	"github.com/redforks/errors"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -170,6 +173,39 @@ var _ = bdd.Describe("life", func() {
 				close(wait)
 			}()
 			assertShutdown(3*time.Millisecond, 10*time.Millisecond)
+		})
+
+		bdd.Context("errors.Handle", func() {
+
+			bdd.BeforeEach(func() {
+				errors.SetHandler(func(_ context.Context, err interface{}) {
+					appendLog(fmt.Sprintf("%s", err))
+				})
+			})
+
+			bdd.AfterEach(func() {
+				errors.SetHandler(nil)
+			})
+
+			bdd.It("error in start", func() {
+				Register("pkg", func() {
+					panic("error")
+				}, newLogFunc("should not called"))
+
+				assert.Panics(t(), Start, "error")
+				assertLog("error\nExit 10\n")
+			})
+
+			bdd.It("error in shutdown", func() {
+				Register("pkg", nil, func() {
+					panic("error")
+				})
+
+				Start()
+				assert.Panics(t(), Shutdown, "error")
+				assertLog("error\nExit 11\n")
+			})
+
 		})
 
 	})
