@@ -114,7 +114,7 @@ func Start() {
 		l.Unlock()
 		if err := recover(); err != nil {
 			errors.Handle(nil, err)
-			callHooks(Abort)
+			callHooks(OnAbort)
 			exit(10)
 			panic(err)
 		}
@@ -151,7 +151,7 @@ func Shutdown() {
 
 		if err := recover(); err != nil {
 			errors.Handle(nil, err)
-			callHooks(Abort)
+			callHooks(OnAbort)
 			exit(11)
 			panic(err)
 		}

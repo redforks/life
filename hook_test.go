@@ -74,8 +74,8 @@ var _ = bdd.Describe("hook", func() {
 			panic("foo")
 		}, nil)
 
-		RegisterHook("foo", 0, Abort, newLogFunc("foo"))
-		RegisterHook("bar", 1, Abort, newLogFunc("bar"))
+		RegisterHook("foo", 0, OnAbort, newLogFunc("foo"))
+		RegisterHook("bar", 1, OnAbort, newLogFunc("bar"))
 
 		assert.Panics(t(), Start)
 		assertLog("onStart\nfoo\nbar\nExit 10\n")
@@ -86,8 +86,8 @@ var _ = bdd.Describe("hook", func() {
 			panic("foo")
 		})
 
-		RegisterHook("foo", 0, Abort, newLogFunc("foo"))
-		RegisterHook("bar", 1, Abort, newLogFunc("bar"))
+		RegisterHook("foo", 0, OnAbort, newLogFunc("foo"))
+		RegisterHook("bar", 1, OnAbort, newLogFunc("bar"))
 
 		Start()
 		assert.Panics(t(), Shutdown)
@@ -102,7 +102,7 @@ var _ = bdd.Describe("hook", func() {
 			panic("foo")
 		}, nil)
 
-		RegisterHook("bar", 1, Abort, func() {
+		RegisterHook("bar", 1, OnAbort, func() {
 			<-hold
 		})
 

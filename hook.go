@@ -25,7 +25,7 @@ const (
 
 	// Hooks called on start / shutdown function panic or return error, life
 	// calling Abort hooks before exit.
-	Abort
+	OnAbort
 )
 
 type hook struct {
