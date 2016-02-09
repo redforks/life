@@ -21,6 +21,10 @@ const (
 
 	// Hooks called before entering shutingdown phase
 	BeforeShutingdown
+
+	// Hooks called on start / shutdown function panic or return error, life
+	// calling Abort hooks before exit.
+	Abort
 )
 
 type hook struct {
@@ -30,7 +34,7 @@ type hook struct {
 }
 
 var (
-	hooks [][]*hook = make([][]*hook, 3)
+	hooks [][]*hook = make([][]*hook, 4)
 )
 
 // RegisterHook register a function that executed when typ hook event occurred. Name is

@@ -3,6 +3,7 @@ package life
 import (
 	"fmt"
 	"spork/testing/tassert"
+	"strconv"
 	"time"
 
 	bdd "github.com/onsi/ginkgo"
@@ -12,6 +13,10 @@ import (
 var _ = bdd.Describe("life", func() {
 	bdd.BeforeEach(func() {
 		slog = ""
+
+		exit = func(n int) {
+			appendLog("Exit " + strconv.Itoa(n))
+		}
 	})
 
 	bdd.AfterEach(Reset)

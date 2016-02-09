@@ -64,6 +64,9 @@ var (
 
 	// shutdown chann to notify WaitToEnd. Channel closed on shutdown complete.
 	shutdown = make(chan struct{})
+
+	// unit test override this to test stub
+	exit = os.Exit
 )
 
 type pkg struct {
@@ -106,7 +109,15 @@ func Register(name string, onStart, onShutdown LifeCallback, depends ...string) 
 // and exit the app during starting.
 func Start() {
 	l.Lock()
-	defer l.Unlock()
+	defer func() {
+		l.Unlock()
+		if err := recover(); err != nil {
+			log.Print(err)
+			callHooks(Abort)
+			exit(10)
+			panic(err)
+		}
+	}()
 
 	if state != Initing {
 		log.Panicf("[%s] Can not start in \"%s\" phase", tag, state)
@@ -136,6 +147,13 @@ func Shutdown() {
 		// always set exit state to halt
 		setState(halt)
 		l.Unlock()
+
+		if err := recover(); err != nil {
+			log.Print(err)
+			callHooks(Abort)
+			exit(11)
+			panic(err)
+		}
 	}()
 
 	switch state {

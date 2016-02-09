@@ -2,6 +2,9 @@
 package life
 
 import (
+	"os"
+	"strconv"
+
 	bdd "github.com/onsi/ginkgo"
 	"github.com/stretchr/testify/assert"
 )
@@ -13,13 +16,17 @@ var _ = bdd.Describe("hook", func() {
 
 	bdd.BeforeEach(func() {
 		slog = ""
-		oldHooks, hooks = hooks, make([][]*hook, 3)
+		oldHooks, hooks = hooks, make([][]*hook, 4)
 
 		Register("foo", newLogFunc("onStart"), newLogFunc("onShutdown"))
+		exit = func(n int) {
+			appendLog("Exit " + strconv.Itoa(n))
+		}
 	})
 
 	bdd.AfterEach(func() {
 		Reset()
+		exit = os.Exit
 		hooks, oldHooks = oldHooks, nil
 	})
 
@@ -51,6 +58,31 @@ var _ = bdd.Describe("hook", func() {
 		Start()
 		Shutdown()
 		assertLog("onStart\nbar\nfoo\nonShutdown\n")
+	})
+
+	bdd.It("Abort because start failed", func() {
+		Register("panic", func() {
+			panic("foo")
+		}, nil)
+
+		RegisterHook("foo", 0, Abort, newLogFunc("foo"))
+		RegisterHook("bar", 1, Abort, newLogFunc("bar"))
+
+		assert.Panics(t(), Start)
+		assertLog("onStart\nfoo\nbar\nExit 10\n")
+	})
+
+	bdd.It("Abort because shutdow failed", func() {
+		Register("panic", nil, func() {
+			panic("foo")
+		})
+
+		RegisterHook("foo", 0, Abort, newLogFunc("foo"))
+		RegisterHook("bar", 1, Abort, newLogFunc("bar"))
+
+		Start()
+		assert.Panics(t(), Shutdown)
+		assertLog("onStart\nfoo\nbar\nExit 11\n")
 	})
 
 	bdd.It("Sort by order", func() {
