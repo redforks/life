@@ -210,6 +210,12 @@ var _ = bdd.Describe("life", func() {
 
 	})
 
+	bdd.It("Abort", func() {
+		RegisterHook("pkg1", 0, OnAbort, newLogFunc("foo"))
+		Abort()
+		assertLog("foo\nExit 12\n")
+	})
+
 	bdd.Context("Sort by dependency", func() {
 
 		bdd.It("Two pkgs", func() {

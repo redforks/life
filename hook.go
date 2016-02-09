@@ -23,8 +23,9 @@ const (
 	// Hooks called before entering shutingdown phase
 	BeforeShutingdown
 
-	// Hooks called on start / shutdown function panic or return error, life
-	// calling Abort hooks before exit.
+	// Hooks called on abnormal error before exit. Abort hooks run in any state,
+	// even before your package initialized, check your hooks to work on any states,
+	// do not assume opened file, socket, channel, etc.
 	OnAbort
 )
 

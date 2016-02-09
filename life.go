@@ -180,6 +180,14 @@ func Shutdown() {
 	close(shutdown)
 }
 
+// Abort calling Abort hooks, and then exit. It is useful when fatal error
+// occurred outside life package, ensure abort hooks done its job
+// (such as: spork/errrpt, async log).
+func Abort() {
+	callHooks(OnAbort)
+	exit(12)
+}
+
 // WaitToEnd block calling goroutine until safely Shutdown. Can only be called
 // in running and afterwards phase.
 func WaitToEnd() {
