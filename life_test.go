@@ -3,6 +3,7 @@ package life
 import (
 	"fmt"
 	"os"
+	"spork/testing/reset"
 	"spork/testing/tassert"
 	"strconv"
 	"time"
@@ -17,6 +18,7 @@ import (
 
 var _ = bdd.Describe("life", func() {
 	bdd.BeforeEach(func() {
+		reset.Enable()
 		slog = ""
 
 		hal.Exit = func(n int) {
@@ -25,7 +27,7 @@ var _ = bdd.Describe("life", func() {
 	})
 
 	bdd.AfterEach(func() {
-		Reset()
+		reset.Disable()
 		hal.Exit = os.Exit
 	})
 

@@ -3,6 +3,7 @@ package life
 
 import (
 	"os"
+	"spork/testing/reset"
 	"strconv"
 	"time"
 
@@ -25,6 +26,7 @@ var _ = bdd.Describe("hook", func() {
 	})
 
 	bdd.BeforeEach(func() {
+		reset.Enable()
 		slog = ""
 		oldHooks, hooks = hooks, make([][]*hook, 4)
 
@@ -35,7 +37,7 @@ var _ = bdd.Describe("hook", func() {
 	})
 
 	bdd.AfterEach(func() {
-		Reset()
+		reset.Disable()
 		hal.Exit = os.Exit
 		hooks, oldHooks = oldHooks, nil
 	})
