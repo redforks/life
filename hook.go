@@ -44,8 +44,6 @@ var (
 // used in log only. If multiple function hook to one hookType, they executed
 // by order, smaller execute first, If two hooks have the same order, they will
 // execute in any order.
-//
-// Hooks not reset by spork/testing/reset package.
 func RegisterHook(name string, order int, typ hookType, fn HookFunc) {
 	if State() != Initing {
 		log.Panicf("[%s] Can not register hook \"%s\" in \"%s\" phase", tag, name, state)

@@ -17,14 +17,10 @@ import (
 )
 
 var _ = bdd.Describe("life", func() {
-	var (
-		oldHooks [][]*hook
-	)
 
 	bdd.BeforeEach(func() {
 		reset.Enable()
 		slog = ""
-		oldHooks, hooks = hooks, make([][]*hook, 4)
 
 		hal.Exit = func(n int) {
 			appendLog("Exit " + strconv.Itoa(n))
@@ -34,7 +30,6 @@ var _ = bdd.Describe("life", func() {
 	bdd.AfterEach(func() {
 		reset.Disable()
 		hal.Exit = os.Exit
-		hooks, oldHooks = oldHooks, nil
 	})
 
 	bdd.It("Register duplicate", func() {

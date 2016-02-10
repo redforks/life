@@ -13,14 +13,10 @@ import (
 )
 
 var _ = bdd.Describe("hook", func() {
-	var (
-		oldHooks [][]*hook
-	)
 
 	bdd.BeforeEach(func() {
 		reset.Enable()
 		slog = ""
-		oldHooks, hooks = hooks, make([][]*hook, 4)
 
 		Register("foo", newLogFunc("onStart"), newLogFunc("onShutdown"))
 		hal.Exit = func(n int) {
@@ -31,7 +27,6 @@ var _ = bdd.Describe("hook", func() {
 	bdd.AfterEach(func() {
 		reset.Disable()
 		hal.Exit = os.Exit
-		hooks, oldHooks = oldHooks, nil
 	})
 
 	bdd.It("Do not allow add hook other than Initing phase", func() {

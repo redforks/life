@@ -279,6 +279,7 @@ func init() {
 	reset.Register(Shutdown, func() {
 		setState(Initing)
 		pkgs = pkgs[:0]
+		hooks = make([][]*hook, 4)
 		shutdown = make(chan struct{})
 	})
 }
