@@ -25,6 +25,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"spork"
 	"spork/testing/reset"
 	"strings"
 	"sync"
@@ -264,7 +265,10 @@ func noIncoming(pkgs []*pkg, p *pkg) bool {
 }
 
 func init() {
-	go monitorSignal()
+	if !spork.TestMode() {
+		go monitorSignal()
+	}
+
 	reset.Register(Shutdown, func() {
 		setState(Initing)
 		pkgs = pkgs[:0]
