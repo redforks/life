@@ -17,9 +17,14 @@ import (
 )
 
 var _ = bdd.Describe("life", func() {
+	var (
+		oldHooks [][]*hook
+	)
+
 	bdd.BeforeEach(func() {
 		reset.Enable()
 		slog = ""
+		oldHooks, hooks = hooks, make([][]*hook, 4)
 
 		hal.Exit = func(n int) {
 			appendLog("Exit " + strconv.Itoa(n))
@@ -29,6 +34,7 @@ var _ = bdd.Describe("life", func() {
 	bdd.AfterEach(func() {
 		reset.Disable()
 		hal.Exit = os.Exit
+		hooks, oldHooks = oldHooks, nil
 	})
 
 	bdd.It("Register duplicate", func() {
@@ -220,6 +226,12 @@ var _ = bdd.Describe("life", func() {
 		RegisterHook("pkg1", 0, OnAbort, newLogFunc("foo"))
 		Abort()
 		assertLog("foo\nExit 12\n")
+	})
+
+	bdd.It("Exit", func() {
+		RegisterHook("pkg1", 0, OnAbort, newLogFunc("foo"))
+		Exit(100)
+		assertLog("foo\nExit 100\n")
 	})
 
 	bdd.Context("Sort by dependency", func() {

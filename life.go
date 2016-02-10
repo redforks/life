@@ -184,8 +184,14 @@ func Shutdown() {
 // occurred outside life package, ensure abort hooks done its job
 // (such as: spork/errrpt, async log).
 func Abort() {
+	Exit(12)
+}
+
+// Exit() exit the problem with n as exit code after executing all OnAbort
+// hooks. Like Abort() but can set exit code.
+func Exit(n int) {
 	callHooks(OnAbort)
-	hal.Exit(12)
+	hal.Exit(n)
 }
 
 // WaitToEnd block calling goroutine until safely Shutdown. Can only be called
