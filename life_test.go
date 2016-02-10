@@ -2,6 +2,7 @@ package life
 
 import (
 	"fmt"
+	"os"
 	"spork/testing/tassert"
 	"strconv"
 	"time"
@@ -10,6 +11,7 @@ import (
 
 	bdd "github.com/onsi/ginkgo"
 	"github.com/redforks/errors"
+	"github.com/redforks/hal"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -17,12 +19,15 @@ var _ = bdd.Describe("life", func() {
 	bdd.BeforeEach(func() {
 		slog = ""
 
-		exit = func(n int) {
+		hal.Exit = func(n int) {
 			appendLog("Exit " + strconv.Itoa(n))
 		}
 	})
 
-	bdd.AfterEach(Reset)
+	bdd.AfterEach(func() {
+		Reset()
+		hal.Exit = os.Exit
+	})
 
 	bdd.It("Register duplicate", func() {
 		Register("pkg1", nil, nil)

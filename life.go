@@ -25,7 +25,6 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"spork"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -33,6 +32,7 @@ import (
 	"time"
 
 	"github.com/redforks/errors"
+	"github.com/redforks/hal"
 	"github.com/stevenle/topsort"
 )
 
@@ -113,7 +113,7 @@ func Start() {
 		if err := recover(); err != nil {
 			errors.Handle(nil, err)
 			callHooks(OnAbort)
-			spork.Exit(10)
+			hal.Exit(10)
 			panic(err)
 		}
 	}()
@@ -150,7 +150,7 @@ func Shutdown() {
 		if err := recover(); err != nil {
 			errors.Handle(nil, err)
 			callHooks(OnAbort)
-			exit(11)
+			hal.Exit(11)
 			panic(err)
 		}
 	}()
@@ -183,7 +183,7 @@ func Shutdown() {
 // (such as: spork/errrpt, async log).
 func Abort() {
 	callHooks(OnAbort)
-	exit(12)
+	hal.Exit(12)
 }
 
 // WaitToEnd block calling goroutine until safely Shutdown. Can only be called

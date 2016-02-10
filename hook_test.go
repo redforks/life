@@ -7,6 +7,7 @@ import (
 	"time"
 
 	bdd "github.com/onsi/ginkgo"
+	"github.com/redforks/hal"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -28,14 +29,14 @@ var _ = bdd.Describe("hook", func() {
 		oldHooks, hooks = hooks, make([][]*hook, 4)
 
 		Register("foo", newLogFunc("onStart"), newLogFunc("onShutdown"))
-		exit = func(n int) {
+		hal.Exit = func(n int) {
 			appendLog("Exit " + strconv.Itoa(n))
 		}
 	})
 
 	bdd.AfterEach(func() {
 		Reset()
-		exit = os.Exit
+		hal.Exit = os.Exit
 		hooks, oldHooks = oldHooks, nil
 	})
 
