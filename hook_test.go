@@ -17,14 +17,6 @@ var _ = bdd.Describe("hook", func() {
 		oldHooks [][]*hook
 	)
 
-	bdd.BeforeSuite(func() {
-		testMode = true
-	})
-
-	bdd.AfterSuite(func() {
-		testMode = false
-	})
-
 	bdd.BeforeEach(func() {
 		reset.Enable()
 		slog = ""

@@ -5,6 +5,7 @@ package life
 import (
 	"log"
 	"sort"
+	"spork"
 	"time"
 )
 
@@ -36,8 +37,7 @@ type hook struct {
 }
 
 var (
-	hooks    [][]*hook = make([][]*hook, 4)
-	testMode           = false
+	hooks [][]*hook = make([][]*hook, 4)
 )
 
 // RegisterHook register a function that executed when typ hook event occurred. Name is
@@ -72,7 +72,7 @@ func callHooks(typ hookType) {
 	}()
 
 	timeout := 30 * time.Second
-	if testMode { // can not import and use spork.TestMode
+	if spork.TestMode() {
 		timeout = 5 * time.Millisecond
 	}
 	select {
