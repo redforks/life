@@ -120,11 +120,11 @@ var _ = bdd.Describe("life", func() {
 		})
 
 		var startWait = func() {
+			start = time.Now()
 			go func() {
 				WaitToEnd()
 				close(wait)
 			}()
-			start = time.Now()
 		}
 
 		var assertShutdown = func(delayMin, delayMax time.Duration) {
@@ -144,19 +144,18 @@ var _ = bdd.Describe("life", func() {
 
 			startWait()
 			Shutdown()
-			assertShutdown(4*time.Millisecond, 10*time.Millisecond)
+			assertShutdown(4*time.Millisecond, 15*time.Millisecond)
 		})
 
 		bdd.It("During shutdown", func() {
 			Register("pkg", nil, func() {
-				time.Sleep(5 * time.Millisecond)
+				time.Sleep(6 * time.Millisecond)
 			})
 
 			Start()
 			go Shutdown()
-			time.Sleep(time.Millisecond)
 			startWait()
-			assertShutdown(3*time.Millisecond, 10*time.Millisecond)
+			assertShutdown(3*time.Millisecond, 15*time.Millisecond)
 		})
 
 		bdd.It("after shutdown", func() {
@@ -179,7 +178,7 @@ var _ = bdd.Describe("life", func() {
 				Shutdown()
 				close(wait)
 			}()
-			assertShutdown(3*time.Millisecond, 10*time.Millisecond)
+			assertShutdown(3*time.Millisecond, 15*time.Millisecond)
 		})
 
 		bdd.Context("errors.Handle", func() {

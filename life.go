@@ -198,6 +198,7 @@ func WaitToEnd() {
 	case Running, Starting, Initing:
 		l.Unlock()
 		<-shutdown
+		return
 	default:
 		// Shutingdown can not visible, it is only in Shutdown function
 		log.Fatalf("[%s] Unknown state: %s", tag, state)
