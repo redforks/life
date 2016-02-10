@@ -25,6 +25,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"spork"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -65,9 +66,6 @@ var (
 
 	// shutdown chann to notify WaitToEnd. Channel closed on shutdown complete.
 	shutdown = make(chan struct{})
-
-	// unit test override this to test stub
-	exit = os.Exit
 )
 
 type pkg struct {
@@ -115,7 +113,7 @@ func Start() {
 		if err := recover(); err != nil {
 			errors.Handle(nil, err)
 			callHooks(OnAbort)
-			exit(10)
+			spork.Exit(10)
 			panic(err)
 		}
 	}()
