@@ -98,7 +98,7 @@ var _ = bdd.Describe("life", func() {
 		Start()
 		Shutdown()
 		assertLog("pkg1\n")
-		assert.Equal(t(), halt, State())
+		assert.Equal(t(), Halt, State())
 	})
 
 	bdd.It("OnShutdown two", func() {

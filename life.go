@@ -49,7 +49,7 @@ const (
 	Running
 	Shutingdown
 	// state after Shutingdown complete
-	halt
+	Halt
 
 	// tag for log
 	tag = "life"
@@ -146,7 +146,7 @@ func Shutdown() {
 	l.Lock()
 	defer func() {
 		// always set exit state to halt
-		setState(halt)
+		setState(Halt)
 		l.Unlock()
 
 		if err := recover(); err != nil {
@@ -200,7 +200,7 @@ func WaitToEnd() {
 	l.Lock()
 
 	switch state {
-	case halt:
+	case Halt:
 	case Running, Starting, Initing:
 		l.Unlock()
 		<-shutdown
