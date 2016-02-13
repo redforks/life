@@ -139,6 +139,10 @@ func Start() {
 	callHooks(BeforeRunning)
 	log.Printf("[%s] all packages started, ready to serve", tag)
 	setState(Running)
+
+	if !spork.TestMode() {
+		go monitorSignal()
+	}
 }
 
 // Put phase to shutdown, Run all registered OnShutdown() function in reserved order.
@@ -272,10 +276,6 @@ func noIncoming(pkgs []*pkg, p *pkg) bool {
 }
 
 func init() {
-	if !spork.TestMode() {
-		go monitorSignal()
-	}
-
 	reset.Register(Shutdown, func() {
 		setState(Initing)
 		pkgs = pkgs[:0]
