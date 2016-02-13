@@ -88,8 +88,8 @@ func setState(st stateT) {
 }
 
 // Register a package, optionally includes depended packages. If not provides
-// depended package, it will run as registered order. Depends need not exist,
-// it will check and sort in Start().
+// depended package, it will run as registered order. Depends need not to be
+// exist, it will check and sort in Start().
 func Register(name string, onStart, onShutdown LifeCallback, depends ...string) {
 	st := State()
 	if st != Initing {
