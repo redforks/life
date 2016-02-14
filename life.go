@@ -123,9 +123,9 @@ func Start() {
 	if state != Initing {
 		log.Panicf("[%s] Can not start in \"%s\" phase", tag, state)
 	}
-	setState(Starting)
 
 	callHooks(BeforeStarting)
+	setState(Starting)
 
 	pkgs = sortByDependency(pkgs)
 	for _, pkg := range pkgs {
