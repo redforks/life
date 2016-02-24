@@ -71,7 +71,7 @@ func callHooks(typ hookType) {
 
 	timeout := 30 * time.Second
 	if spork.TestMode() {
-		timeout = 5 * time.Millisecond
+		timeout = time.Second
 	}
 	select {
 	case <-wait:

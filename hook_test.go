@@ -103,7 +103,7 @@ var _ = bdd.Describe("hook", func() {
 
 		select {
 		case <-wait:
-		case <-time.After(15 * time.Millisecond):
+		case <-time.After(1500 * time.Millisecond):
 			assert.Fail(t(), "abort hooks timeout")
 		}
 		close(hold)
