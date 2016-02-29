@@ -11,9 +11,9 @@ import (
 	"golang.org/x/net/context"
 
 	bdd "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 	"github.com/redforks/errors"
 	"github.com/redforks/hal"
-	"github.com/stretchr/testify/assert"
 )
 
 var _ = bdd.Describe("life", func() {
@@ -42,10 +42,10 @@ var _ = bdd.Describe("life", func() {
 	bdd.It("OnStart One", func() {
 		Register("pkg1", func() {
 			appendLog("pkg1")
-			assert.Equal(t(), Starting, State())
+			Ω(State()).Should(Equal(Starting))
 		}, nil)
 		Start()
-		assert.Equal(t(), Running, State())
+		Ω(State()).Should(Equal(Running))
 		assertLog("pkg1\n")
 	})
 
@@ -90,12 +90,12 @@ var _ = bdd.Describe("life", func() {
 	bdd.It("OnShutdown one", func() {
 		Register("pkg1", nil, func() {
 			appendLog("pkg1")
-			assert.Equal(t(), Shutingdown, State())
+			Ω(State()).Should(Equal(Shutingdown))
 		})
 		Start()
 		Shutdown()
 		assertLog("pkg1\n")
-		assert.Equal(t(), Halt, State())
+		Ω(State()).Should(Equal(Halt))
 	})
 
 	bdd.It("OnShutdown two", func() {
@@ -126,12 +126,8 @@ var _ = bdd.Describe("life", func() {
 		}
 
 		var assertShutdown = func(delayMin, delayMax time.Duration) {
-			select {
-			case <-wait:
-				assert.True(t(), time.Now().Sub(start) > delayMin)
-			case <-time.After(delayMax):
-				assert.Fail(t(), "WaitToEnd() timeout")
-			}
+			Eventually(wait).Should(BeClosed())
+			Ω(time.Now().Sub(start)).Should(BeNumerically(">", delayMin))
 		}
 
 		bdd.It("block until shutdown", func() {
@@ -196,7 +192,7 @@ var _ = bdd.Describe("life", func() {
 					panic("error")
 				}, newLogFunc("should not called"))
 
-				assert.Panics(t(), Start, "error")
+				Ω(Start).Should(Panic(), "error")
 				assertLog("error\nExit 10\n")
 			})
 
@@ -206,7 +202,7 @@ var _ = bdd.Describe("life", func() {
 				})
 
 				Start()
-				assert.Panics(t(), Shutdown, "error")
+				Ω(Shutdown).Should(Panic(), "error")
 				assertLog("error\nExit 11\n")
 			})
 

@@ -5,11 +5,10 @@ import (
 	"os"
 	"spork/testing/reset"
 	"strconv"
-	"time"
 
 	bdd "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 	"github.com/redforks/hal"
-	"github.com/stretchr/testify/assert"
 )
 
 var _ = bdd.Describe("hook", func() {
@@ -31,9 +30,10 @@ var _ = bdd.Describe("hook", func() {
 
 	bdd.It("Do not allow add hook other than Initing phase", func() {
 		Start()
-		assert.Panics(t(), func() {
+		Ω(func() {
 			RegisterHook("foo", 0, BeforeRunning, newLogFunc("foo"))
-		})
+		}).Should(Panic())
+
 	})
 
 	bdd.It("BeforeStarting", func() {
@@ -67,7 +67,7 @@ var _ = bdd.Describe("hook", func() {
 		RegisterHook("foo", 0, OnAbort, newLogFunc("foo"))
 		RegisterHook("bar", 1, OnAbort, newLogFunc("bar"))
 
-		assert.Panics(t(), Start)
+		Ω(Start).Should(Panic())
 		assertLog("onStart\nfoo\nbar\nExit 10\n")
 	})
 
@@ -80,7 +80,7 @@ var _ = bdd.Describe("hook", func() {
 		RegisterHook("bar", 1, OnAbort, newLogFunc("bar"))
 
 		Start()
-		assert.Panics(t(), Shutdown)
+		Ω(Shutdown).Should(Panic())
 		assertLog("onStart\nfoo\nbar\nExit 11\n")
 	})
 
@@ -97,15 +97,11 @@ var _ = bdd.Describe("hook", func() {
 		})
 
 		go func() {
-			assert.Panics(t(), Start)
+			Ω(Start).Should(Panic())
 			close(wait)
 		}()
 
-		select {
-		case <-wait:
-		case <-time.After(1500 * time.Millisecond):
-			assert.Fail(t(), "abort hooks timeout")
-		}
+		Eventually(wait, 1.5).Should(BeClosed(), "abort hooks timeout")
 		close(hold)
 	})
 

@@ -1,6 +1,6 @@
 package life
 
-import "github.com/stretchr/testify/assert"
+import . "github.com/onsi/gomega"
 
 var (
 	slog string
@@ -11,7 +11,7 @@ func appendLog(msg string) {
 }
 
 func assertLog(expected string) {
-	assert.Equal(t(), expected, slog)
+	Ω(slog).Should(Equal(expected))
 	slog = ""
 }
 
