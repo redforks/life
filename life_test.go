@@ -41,11 +41,8 @@ var _ = bdd.Describe("life", func() {
 
 	bdd.It("OnStart One", func() {
 		Register("pkg1", func() {
-			fmt.Print("start 1")
 			appendLog("pkg1")
-			fmt.Print("start 2")
 			assert.Equal(t(), Starting, State())
-			fmt.Print("start 3")
 		}, nil)
 		Start()
 		assert.Equal(t(), Running, State())
