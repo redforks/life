@@ -3,8 +3,8 @@ package life
 import (
 	"fmt"
 	"os"
+	"spork/testing/matcher"
 	"spork/testing/reset"
-	"spork/testing/tassert"
 	"strconv"
 	"time"
 
@@ -34,9 +34,12 @@ var _ = bdd.Describe("life", func() {
 
 	bdd.It("Register duplicate", func() {
 		Register("pkg1", nil, nil)
-		tassert.Panics(t(), func() {
+		Ω(func() {
 			Register("pkg1", nil, nil)
-		}, "[life] package 'pkg1' already registered")
+		}).Should(matcher.Panics(
+
+			"[life] package 'pkg1' already registered"))
+
 	})
 
 	bdd.It("OnStart One", func() {
@@ -61,18 +64,24 @@ var _ = bdd.Describe("life", func() {
 
 		bdd.It("Running", func() {
 			Start()
-			tassert.Panics(t(), func() {
+			Ω(func() {
 				Register("pkg1", nil, nil)
-			}, "[life] Can not register package \"pkg1\" in \"Running\" phase")
+			}).Should(matcher.Panics(
+
+				"[life] Can not register package \"pkg1\" in \"Running\" phase"))
+
 		})
 
 		bdd.It("Starting", func() {
 			Register("pkg2", func() {
 				Register("pkg1", func() {}, nil)
 			}, nil)
-			tassert.Panics(t(), func() {
+			Ω(func() {
 				Start()
-			}, "[life] Can not register package \"pkg1\" in \"Starting\" phase")
+			}).Should(matcher.Panics(
+
+				"[life] Can not register package \"pkg1\" in \"Starting\" phase"))
+
 		})
 
 		bdd.It("Shutdown", func() {
@@ -80,9 +89,12 @@ var _ = bdd.Describe("life", func() {
 				Register("pkg1", nil, nil)
 			})
 			Start()
-			tassert.Panics(t(), func() {
+			Ω(func() {
 				Shutdown()
-			}, "[life] Can not register package \"pkg1\" in \"Shutingdown\" phase")
+			}).Should(matcher.Panics(
+
+				"[life] Can not register package \"pkg1\" in \"Shutingdown\" phase"))
+
 		})
 
 	})
@@ -245,7 +257,7 @@ var _ = bdd.Describe("life", func() {
 			Register("pkg1", nil, nil, "pkg2", "pkg3")
 			Register("pkg2", nil, nil, "pkg1")
 			Register("pkg3", nil, nil)
-			tassert.Panics(t(), Start, "[life] Loop dependency detected\n\tpkg1 -> pkg2, pkg3\n\tpkg2 -> pkg1")
+			Ω(Start).Should(matcher.Panics("[life] Loop dependency detected\n\tpkg1 -> pkg2, pkg3\n\tpkg2 -> pkg1"))
 		})
 
 	})
