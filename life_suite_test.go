@@ -7,8 +7,6 @@ import (
 	"testing"
 )
 
-var t = GinkgoT
-
 func TestLife(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Life Suite")
