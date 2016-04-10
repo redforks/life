@@ -1,8 +1,8 @@
-// package document
-package life
+package life_test
 
 import (
 	"os"
+	. "spork/life"
 	"spork/testing/reset"
 	"strconv"
 

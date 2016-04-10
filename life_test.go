@@ -1,8 +1,9 @@
-package life
+package life_test
 
 import (
 	"fmt"
 	"os"
+	. "spork/life"
 	"spork/testing/matcher"
 	"spork/testing/reset"
 	"strconv"
