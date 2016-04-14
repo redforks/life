@@ -11,15 +11,15 @@ import (
 
 	"golang.org/x/net/context"
 
-	bdd "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/redforks/errors"
 	"github.com/redforks/hal"
 )
 
-var _ = bdd.Describe("life", func() {
+var _ = Describe("life", func() {
 
-	bdd.BeforeEach(func() {
+	BeforeEach(func() {
 		reset.Enable()
 		slog = ""
 
@@ -28,22 +28,19 @@ var _ = bdd.Describe("life", func() {
 		}
 	})
 
-	bdd.AfterEach(func() {
+	AfterEach(func() {
 		reset.Disable()
 		hal.Exit = os.Exit
 	})
 
-	bdd.It("Register duplicate", func() {
+	It("Register duplicate", func() {
 		Register("pkg1", nil, nil)
 		Ω(func() {
 			Register("pkg1", nil, nil)
-		}).Should(matcher.Panics(
-
-			"[life] package 'pkg1' already registered"))
-
+		}).Should(matcher.Panics("[life] package 'pkg1' already registered"))
 	})
 
-	bdd.It("OnStart One", func() {
+	It("OnStart One", func() {
 		Register("pkg1", func() {
 			appendLog("pkg1")
 			Ω(State()).Should(Equal(Starting))
@@ -53,7 +50,7 @@ var _ = bdd.Describe("life", func() {
 		assertLog("pkg1\n")
 	})
 
-	bdd.It("OnStart two", func() {
+	It("OnStart two", func() {
 		Register("pkg1", newLogFunc("pkg1"), nil)
 		Register("pkg2", newLogFunc("pkg2"), nil)
 		Register("pkg3", nil, nil)
@@ -61,46 +58,37 @@ var _ = bdd.Describe("life", func() {
 		assertLog("pkg1\npkg2\n")
 	})
 
-	bdd.Context("Register() in wrong phase", func() {
+	Context("Register() in wrong phase", func() {
 
-		bdd.It("Running", func() {
+		It("Running", func() {
 			Start()
 			Ω(func() {
 				Register("pkg1", nil, nil)
-			}).Should(matcher.Panics(
-
-				"[life] Can not register package \"pkg1\" in \"Running\" phase"))
-
+			}).Should(matcher.Panics("[life] Can not register package \"pkg1\" in \"Running\" phase"))
 		})
 
-		bdd.It("Starting", func() {
+		It("Starting", func() {
 			Register("pkg2", func() {
 				Register("pkg1", func() {}, nil)
 			}, nil)
 			Ω(func() {
 				Start()
-			}).Should(matcher.Panics(
-
-				"[life] Can not register package \"pkg1\" in \"Starting\" phase"))
-
+			}).Should(matcher.Panics("[life] Can not register package \"pkg1\" in \"Starting\" phase"))
 		})
 
-		bdd.It("Shutdown", func() {
+		It("Shutdown", func() {
 			Register("pkg2", nil, func() {
 				Register("pkg1", nil, nil)
 			})
 			Start()
 			Ω(func() {
 				Shutdown()
-			}).Should(matcher.Panics(
-
-				"[life] Can not register package \"pkg1\" in \"Shutingdown\" phase"))
-
+			}).Should(matcher.Panics("[life] Can not register package \"pkg1\" in \"Shutingdown\" phase"))
 		})
 
 	})
 
-	bdd.It("OnShutdown one", func() {
+	It("OnShutdown one", func() {
 		Register("pkg1", nil, func() {
 			appendLog("pkg1")
 			Ω(State()).Should(Equal(Shutingdown))
@@ -111,7 +99,7 @@ var _ = bdd.Describe("life", func() {
 		Ω(State()).Should(Equal(Halt))
 	})
 
-	bdd.It("OnShutdown two", func() {
+	It("OnShutdown two", func() {
 		Register("pkg1", nil, newLogFunc("pkg1"))
 		Register("pkg11", nil, nil)
 		Register("pkg2", nil, newLogFunc("pkg2"))
@@ -120,13 +108,13 @@ var _ = bdd.Describe("life", func() {
 		assertLog("pkg2\npkg1\n")
 	})
 
-	bdd.Context("WaitToEnd", func() {
+	Context("WaitToEnd", func() {
 		var (
 			wait  chan struct{}
 			start time.Time
 		)
 
-		bdd.BeforeEach(func() {
+		BeforeEach(func() {
 			wait = make(chan struct{})
 		})
 
@@ -143,7 +131,7 @@ var _ = bdd.Describe("life", func() {
 			Ω(time.Now().Sub(start)).Should(BeNumerically(">", delayMin))
 		}
 
-		bdd.It("block until shutdown", func() {
+		It("block until shutdown", func() {
 			Register("pkg", nil, func() {
 				time.Sleep(5 * time.Millisecond)
 			})
@@ -154,7 +142,7 @@ var _ = bdd.Describe("life", func() {
 			assertShutdown(4*time.Millisecond, 15*time.Millisecond)
 		})
 
-		bdd.It("During shutdown", func() {
+		It("During shutdown", func() {
 			Register("pkg", nil, func() {
 				time.Sleep(6 * time.Millisecond)
 			})
@@ -165,14 +153,14 @@ var _ = bdd.Describe("life", func() {
 			assertShutdown(3*time.Millisecond, 15*time.Millisecond)
 		})
 
-		bdd.It("after shutdown", func() {
+		It("after shutdown", func() {
 			Start()
 			Shutdown()
 			startWait()
 			assertShutdown(0, 5*time.Millisecond)
 		})
 
-		bdd.It("Shutdown wait for ongoing shutdown request", func() {
+		It("Shutdown wait for ongoing shutdown request", func() {
 			Register("pkg", nil, func() {
 				time.Sleep(5 * time.Millisecond)
 			})
@@ -188,19 +176,19 @@ var _ = bdd.Describe("life", func() {
 			assertShutdown(3*time.Millisecond, 15*time.Millisecond)
 		})
 
-		bdd.Context("errors.Handle", func() {
+		Context("errors.Handle", func() {
 
-			bdd.BeforeEach(func() {
+			BeforeEach(func() {
 				errors.SetHandler(func(_ context.Context, err interface{}) {
 					appendLog(fmt.Sprintf("%s", err))
 				})
 			})
 
-			bdd.AfterEach(func() {
+			AfterEach(func() {
 				errors.SetHandler(nil)
 			})
 
-			bdd.It("error in start", func() {
+			It("error in start", func() {
 				Register("pkg", func() {
 					panic("error")
 				}, newLogFunc("should not called"))
@@ -209,7 +197,7 @@ var _ = bdd.Describe("life", func() {
 				assertLog("error\nExit 10\n")
 			})
 
-			bdd.It("error in shutdown", func() {
+			It("error in shutdown", func() {
 				Register("pkg", nil, func() {
 					panic("error")
 				})
@@ -223,21 +211,21 @@ var _ = bdd.Describe("life", func() {
 
 	})
 
-	bdd.It("Abort", func() {
+	It("Abort", func() {
 		RegisterHook("pkg1", 0, OnAbort, newLogFunc("foo"))
 		Abort()
 		assertLog("foo\nExit 12\n")
 	})
 
-	bdd.It("Exit", func() {
+	It("Exit", func() {
 		RegisterHook("pkg1", 0, OnAbort, newLogFunc("foo"))
 		Exit(100)
 		assertLog("foo\nExit 100\n")
 	})
 
-	bdd.Context("Sort by dependency", func() {
+	Context("Sort by dependency", func() {
 
-		bdd.It("Two pkgs", func() {
+		It("Two pkgs", func() {
 			Register("pkg2", newLogFunc("pkg2"), newLogFunc("pkg2"), "pkg1")
 			Register("pkg1", newLogFunc("pkg1"), newLogFunc("pkg1"))
 			Start()
@@ -246,7 +234,7 @@ var _ = bdd.Describe("life", func() {
 			assertLog("pkg2\npkg1\n")
 		})
 
-		bdd.It("Case 2", func() {
+		It("Case 2", func() {
 			Register("a", newLogFunc("a"), nil, "b")
 			Register("b", newLogFunc("b"), nil)
 			Register("c", newLogFunc("c"), nil, "b")
@@ -254,7 +242,7 @@ var _ = bdd.Describe("life", func() {
 			assertLog("b\na\nc\n")
 		})
 
-		bdd.It("Loop dependency", func() {
+		It("Loop dependency", func() {
 			Register("pkg1", nil, nil, "pkg2", "pkg3")
 			Register("pkg2", nil, nil, "pkg1")
 			Register("pkg3", nil, nil)
