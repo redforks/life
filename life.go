@@ -231,6 +231,7 @@ func sortByDependency(pkgs []*pkg) []*pkg {
 		for _, name := range p.depends {
 			if _, exist := pkgMap[name]; !exist {
 				log.Printf("[%s] Warning: \"%s\" depends on not exist package \"%s\"", tag, p.name, name)
+				continue
 			}
 			if err := graph.AddEdge(p.name, name); err != nil {
 				log.Panicf("[%s] Dependency failed: %s", tag, err)

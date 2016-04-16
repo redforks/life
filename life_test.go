@@ -249,6 +249,11 @@ var _ = Describe("life", func() {
 			Ω(Start).Should(matcher.Panics("[life] Loop dependency detected\n\tpkg1 -> pkg2, pkg3\n\tpkg2 -> pkg1"))
 		})
 
+		It("Depends on not exist package", func() {
+			Register("pkg2", nil, nil, "pkg1")
+			Ω(Start).ShouldNot(Panic(), "It is not error when depended package not registered, a warning will add to the log")
+		})
+
 	})
 
 })
