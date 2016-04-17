@@ -68,7 +68,7 @@ var _ = bdd.Describe("hook", func() {
 		RegisterHook("bar", 1, OnAbort, newLogFunc("bar"))
 
 		Ω(Start).Should(Panic())
-		assertLog("onStart\nfoo\nbar\nExit 10\n")
+		assertLog("onStart\nonShutdown\nfoo\nbar\nExit 10\n")
 	})
 
 	bdd.It("Abort because shutdow failed", func() {

@@ -108,6 +108,16 @@ var _ = Describe("life", func() {
 		assertLog("pkg2\npkg1\n")
 	})
 
+	It("Stop started packages on some package panic", func() {
+		Register("pkg1", newLogFunc("start1"), newLogFunc("stop1"))
+		Register("pkg2", func() {
+			panic("pkg2")
+		}, newLogFunc("stop2"))
+		Register("pkg3", newLogFunc("start3"), newLogFunc("stop3"))
+		Ω(Start).Should(Panic())
+		assertLog("start1\nstop1\nExit 10\n")
+	})
+
 	Context("WaitToEnd", func() {
 		var (
 			wait  chan struct{}

@@ -109,10 +109,20 @@ func Register(name string, onStart, onShutdown LifeCallback, depends ...string) 
 // If any OnStart function panic, Start() won't recover, it is normal to panic
 // and exit the app during starting.
 func Start() {
+	startedPkgs := 0
 	l.Lock()
 	defer func() {
 		l.Unlock()
 		if err := recover(); err != nil {
+			// stop started packages
+			l.Lock()
+			defer l.Unlock()
+			for _, pkg := range pkgs[:startedPkgs] {
+				if pkg.onShutdown != nil {
+					pkg.onShutdown()
+				}
+			}
+
 			errors.Handle(nil, err)
 			callHooks(OnAbort)
 			hal.Exit(10)
@@ -128,11 +138,12 @@ func Start() {
 	setState(Starting)
 
 	pkgs = sortByDependency(pkgs)
-	for _, pkg := range pkgs {
+	for i, pkg := range pkgs {
 		log.Printf("[%s] Start package %s", tag, pkg.name)
 		if pkg.onStart != nil {
 			pkg.onStart()
 		}
+		startedPkgs = i + 1
 		log.Printf("[%s] end Start package %s", tag, pkg.name)
 	}
 
