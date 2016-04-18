@@ -138,7 +138,7 @@ var _ = Describe("life", func() {
 
 		var assertShutdown = func(delayMin, delayMax time.Duration) {
 			Eventually(wait).Should(BeClosed())
-			Ω(time.Now().Sub(start)).Should(BeNumerically(">", delayMin))
+			Ω(time.Since(start)).Should(BeNumerically(">", delayMin))
 		}
 
 		It("block until shutdown", func() {
