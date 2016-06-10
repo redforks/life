@@ -22,11 +22,11 @@ package life
 
 import (
 	"fmt"
+	"github.com/redforks/testing/reset"
 	"log"
 	"os"
 	"os/signal"
 	"spork"
-	"spork/testing/reset"
 	"strings"
 	"sync"
 	"sync/atomic"

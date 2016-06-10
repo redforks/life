@@ -2,10 +2,10 @@ package life_test
 
 import (
 	"fmt"
+	"github.com/redforks/testing/reset"
 	"os"
 	. "spork/life"
 	"spork/testing/matcher"
-	"spork/testing/reset"
 	"strconv"
 	"time"
 

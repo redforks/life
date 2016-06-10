@@ -1,9 +1,9 @@
 package life_test
 
 import (
+	"github.com/redforks/testing/reset"
 	"os"
 	. "spork/life"
-	"spork/testing/reset"
 	"strconv"
 
 	bdd "github.com/onsi/ginkgo"
