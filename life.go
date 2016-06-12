@@ -22,7 +22,6 @@ package life
 
 import (
 	"fmt"
-	"github.com/redforks/testing/reset"
 	"log"
 	"os"
 	"os/signal"
@@ -32,6 +31,8 @@ import (
 	"sync/atomic"
 	"syscall"
 	"time"
+
+	"github.com/redforks/testing/reset"
 
 	"github.com/redforks/errors"
 	"github.com/redforks/hal"

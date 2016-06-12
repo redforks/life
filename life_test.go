@@ -2,12 +2,13 @@ package life_test
 
 import (
 	"fmt"
-	"github.com/redforks/testing/matcher"
-	"github.com/redforks/testing/reset"
 	"os"
 	. "spork/life"
 	"strconv"
 	"time"
+
+	"github.com/redforks/testing/matcher"
+	"github.com/redforks/testing/reset"
 
 	"golang.org/x/net/context"
 

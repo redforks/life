@@ -1,10 +1,11 @@
 package life_test
 
 import (
-	"github.com/redforks/testing/reset"
 	"os"
 	. "spork/life"
 	"strconv"
+
+	"github.com/redforks/testing/reset"
 
 	bdd "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
