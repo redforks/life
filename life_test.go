@@ -10,7 +10,7 @@ import (
 	"github.com/redforks/testing/matcher"
 	"github.com/redforks/testing/reset"
 
-	"golang.org/x/net/context"
+	"context"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
