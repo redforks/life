@@ -25,7 +25,6 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"spork"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -152,7 +151,7 @@ func Start() {
 	log.Printf("[%s] all packages started, ready to serve", tag)
 	setState(Running)
 
-	if !spork.TestMode() {
+	if !reset.TestMode() {
 		go monitorSignal()
 	}
 }

@@ -5,8 +5,9 @@ package life
 import (
 	"log"
 	"sort"
-	"spork"
 	"time"
+
+	"github.com/redforks/testing/reset"
 )
 
 // HookFunc called when a hook event occurred. See hookType constants.
@@ -70,7 +71,7 @@ func callHooks(typ hookType) {
 	}()
 
 	timeout := 30 * time.Second
-	if spork.TestMode() {
+	if reset.TestMode() {
 		timeout = time.Second
 	}
 	select {
