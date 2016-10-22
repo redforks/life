@@ -2,8 +2,8 @@ package life_test
 
 import (
 	"fmt"
+	. "github.com/redforks/life"
 	"os"
-	. "spork/life"
 	"strconv"
 	"time"
 

@@ -1,8 +1,8 @@
 package life_test
 
 import (
+	. "github.com/redforks/life"
 	"os"
-	. "spork/life"
 	"strconv"
 
 	"github.com/redforks/testing/reset"
