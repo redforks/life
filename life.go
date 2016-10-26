@@ -139,12 +139,11 @@ func Start() {
 
 	pkgs = sortByDependency(pkgs)
 	for i, pkg := range pkgs {
-		log.Printf("[%s] Start package %s", tag, pkg.name)
+		log.Printf("[%s] Starting package %s", tag, pkg.name)
 		if pkg.onStart != nil {
 			pkg.onStart()
 		}
 		startedPkgs = i + 1
-		log.Printf("[%s] end Start package %s", tag, pkg.name)
 	}
 
 	callHooks(BeforeRunning)
