@@ -1,9 +1,9 @@
 package life_test
 
 import (
-	. "github.com/redforks/life"
-	"os"
 	"strconv"
+
+	. "github.com/redforks/life"
 
 	"github.com/redforks/testing/reset"
 
@@ -26,7 +26,6 @@ var _ = bdd.Describe("hook", func() {
 
 	bdd.AfterEach(func() {
 		reset.Disable()
-		hal.Exit = os.Exit
 	})
 
 	bdd.It("Do not allow add hook other than Initing phase", func() {

@@ -1,16 +1,15 @@
 package life_test
 
 import (
+	"context"
 	"fmt"
-	. "github.com/redforks/life"
-	"os"
 	"strconv"
 	"time"
 
+	. "github.com/redforks/life"
+
 	"github.com/redforks/testing/matcher"
 	"github.com/redforks/testing/reset"
-
-	"context"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -31,7 +30,6 @@ var _ = Describe("life", func() {
 
 	AfterEach(func() {
 		reset.Disable()
-		hal.Exit = os.Exit
 	})
 
 	It("Register duplicate", func() {
