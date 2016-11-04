@@ -6,3 +6,21 @@
 [![Go Walker](http://gowalker.org/api/v1/badge)](https://gowalker.org/github.com/redforks/life)
 
 # Life
+
+Life is an application runtime life management framework for Go.
+
+## Install
+
+    go install github.com/redforks/life
+
+## States
+
+TODO
+
+## Package
+
+TODO
+
+## Hooks
+
+TODO
