@@ -106,7 +106,7 @@ func setState(st StateT) {
 func Register(name string, onStart, onShutdown Callback, depends ...string) {
 	st := State()
 	if st != Initing {
-		log.Panicf("[%s] Can not register package \"%s\" in \"%s\" state", tag, name, st)
+		log.Panicf("[%s] Can not register package \"%s\" in \"%v\" state", tag, name, st)
 	}
 
 	for _, p := range pkgs {
@@ -144,7 +144,7 @@ func Start() {
 	}()
 
 	if state != Initing {
-		log.Panicf("[%s] Can not start in \"%s\" state", tag, state)
+		log.Panicf("[%s] Can not start in \"%v\" state", tag, state)
 	}
 
 	callHooks(BeforeStarting)
@@ -188,7 +188,7 @@ func Shutdown() {
 	switch state {
 	case Running:
 	case Shutingdown:
-		log.Fatalf("[%s] corrupt internal state: %s", tag, state)
+		log.Fatalf("[%s] corrupt internal state: %v", tag, state)
 	default:
 		// app can shutdown at any state
 		return
@@ -235,7 +235,7 @@ func WaitToEnd() {
 		return
 	default:
 		// Shutingdown can not visible, it is only in Shutdown function
-		log.Fatalf("[%s] Unknown state: %s", tag, state)
+		log.Fatalf("[%s] Unknown state: %v", tag, state)
 	}
 
 	l.Unlock()

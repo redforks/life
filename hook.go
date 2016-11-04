@@ -47,7 +47,7 @@ var (
 // execute in any order.
 func RegisterHook(name string, order int, typ hookType, fn HookFunc) {
 	if State() != Initing {
-		log.Panicf("[%s] Can not register hook \"%s\" in \"%s\" state", tag, name, state)
+		log.Panicf("[%s] Can not register hook \"%s\" in \"%v\" state", tag, name, state)
 	}
 
 	hooks[typ] = append(hooks[typ], &hook{
@@ -63,7 +63,7 @@ func callHooks(typ hookType) {
 		items := hooks[typ]
 		sort.Sort(sortHook(items))
 		for _, hook := range items {
-			log.Printf("[%s] Execute %s hook: %s", tag, typ, hook.name)
+			log.Printf("[%s] Execute %v hook: %s", tag, typ, hook.name)
 			hook.fn()
 			log.Printf("[%s] Done %s", tag, hook.name)
 		}
@@ -77,7 +77,7 @@ func callHooks(typ hookType) {
 	select {
 	case <-wait:
 	case <-time.After(timeout):
-		log.Printf("[%s] %s hook timeout", tag, typ)
+		log.Printf("[%s] %v hook timeout", tag, typ)
 	}
 }
 
