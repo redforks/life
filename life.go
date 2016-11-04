@@ -117,10 +117,18 @@ func Register(name string, onStart, onShutdown Callback, depends ...string) {
 	pkgs = append(pkgs, &pkg{name, onStart, onShutdown, depends})
 }
 
+func doShutdownPackages(pkgs []*pkg) {
+	for i := len(pkgs) - 1; i >= 0; i-- {
+		log.Printf("[%s] Shutdown package %s", tag, pkgs[i].name)
+		if pkgs[i].onShutdown != nil {
+			pkgs[i].onShutdown()
+		}
+	}
+}
+
 // Start put state to starting, Run all registered OnStart() functions, if all
 // succeed, move to running state.
-// If any OnStart function panic, Start() won't recover, it is normal to panic
-// and exit the app during starting.
+// If any OnStart function panic, shutdown all started packages.
 func Start() {
 	startedPkgs := 0
 	l.Lock()
@@ -130,10 +138,10 @@ func Start() {
 			// stop started packages
 			l.Lock()
 			defer l.Unlock()
-			for _, pkg := range pkgs[:startedPkgs] {
-				if pkg.onShutdown != nil {
-					pkg.onShutdown()
-				}
+
+			if startedPkgs > 0 {
+				log.Printf("[%s] Error in starting package %s, shutdown all started packages", tag, pkgs[startedPkgs-1].name)
+				doShutdownPackages(pkgs[:startedPkgs])
 			}
 
 			errors.Handle(nil, err)
@@ -197,12 +205,7 @@ func Shutdown() {
 	setState(Shutingdown)
 
 	callHooks(BeforeShutingdown)
-	for i := len(pkgs) - 1; i >= 0; i-- {
-		log.Printf("[%s] Shutdown package %s", tag, pkgs[i].name)
-		if pkgs[i].onShutdown != nil {
-			pkgs[i].onShutdown()
-		}
-	}
+	doShutdownPackages(pkgs)
 
 	log.Printf("[%s] all packages shutdown, ready to exit", tag)
 	close(shutdown)
