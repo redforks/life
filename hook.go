@@ -16,16 +16,16 @@ type HookFunc func()
 type hookType int
 
 const (
-	// Hooks called before entering staring phase
+	// BeforeStarting hooks called before entering staring state
 	BeforeStarting hookType = iota
 
-	// Hooks called before entering running phase
+	// BeforeRunning hooks called before entering running state
 	BeforeRunning
 
-	// Hooks called before entering shutingdown phase
+	// BeforeShutingdown hooks called before entering shutingdown state
 	BeforeShutingdown
 
-	// Hooks called on abnormal error before exit. Abort hooks run in any state,
+	// OnAbort hooks called on abnormal error before exit. Abort hooks run in any state,
 	// even before your package initialized, check your hooks to work on any states,
 	// do not assume opened file, socket, channel, etc.
 	OnAbort
@@ -38,7 +38,7 @@ type hook struct {
 }
 
 var (
-	hooks [][]*hook = make([][]*hook, 4)
+	hooks = make([][]*hook, 4)
 )
 
 // RegisterHook register a function that executed when typ hook event occurred. Name is
@@ -47,7 +47,7 @@ var (
 // execute in any order.
 func RegisterHook(name string, order int, typ hookType, fn HookFunc) {
 	if State() != Initing {
-		log.Panicf("[%s] Can not register hook \"%s\" in \"%s\" phase", tag, name, state)
+		log.Panicf("[%s] Can not register hook \"%s\" in \"%s\" state", tag, name, state)
 	}
 
 	hooks[typ] = append(hooks[typ], &hook{

@@ -1,22 +1,22 @@
 //go:generate stringer -type stateT
 
-// life package manages life cycle of application. An application has follow life phase:
+// Package life manages life cycle of application. An application has follow life state:
 //
 //  1. Config/init. If a package need initialization, provides Init() function.
 //  App main() function call these Init() functions in proper order.
 //  TODO: support united config framework, get config settings from config
 //  files and command arguments.
 //  2. Starting. App call life.Start() function indicate going to starting
-//  phase. Each package register a function by life.OnStart(), they will called
+//  state. Each package register a function by life.OnStart(), they will called
 //  in register order.
-//  3. After life.Start() complete, going to  running phase.
-//  4. Stopping. Calling life.Shutdown() function going to shutdown phase. Each
+//  3. After life.Start() complete, going to  running state.
+//  4. Stopping. Calling life.Shutdown() function going to shutdown state. Each
 //  package can register a function by life.OnShutdown(), they will called in
 //  reversed order.
 //
 //  Use life package, app do not need to remember start every package in
 //  correct order. Keep calling of Start() inside the package itself, clean and elegant.
-//  Shutdown phase enforces all package and go routines exit properly, without
+//  Shutdown state enforces all package and go routines exit properly, without
 //  unpredictable state and corrupting data.
 package life
 
@@ -38,17 +38,30 @@ import (
 	"github.com/stevenle/topsort"
 )
 
-type LifeCallback func()
+// Callback is callback function called by life package.
+type Callback func()
 
-type stateT int32
+// StateT indicate current application life state.
+type StateT int32
 
 const (
-	// life phase constants
-	Initing stateT = iota
+	// Initing is the default state of life, in this state, all packages doing
+	// init stuff using init() func.
+	Initing StateT = iota
+
+	// Starting state runs all package's start functions, they are running in
+	// dependent order
 	Starting
+
+	// Running is the normal running state, after all packages started.
 	Running
+
+	// Shutingdown is the state to do the packages shutdown work.
 	Shutingdown
-	// state after Shutingdown complete
+
+	// Halt is a temporary state after all package shutdown and application not exit,
+	// it is mainly used inside life package, normally outside package won't got a change
+	// to saw Halt state.
 	Halt
 
 	// tag for log
@@ -57,7 +70,7 @@ const (
 
 var (
 	l     = sync.Mutex{}
-	state stateT
+	state StateT
 
 	// copy of state, returned by State() to allow calling State() function without
 	// dead-lock. golang do not allow nested Mutex, use `l' variable inside State()
@@ -72,16 +85,16 @@ var (
 
 type pkg struct {
 	name                string
-	onStart, onShutdown LifeCallback
+	onStart, onShutdown Callback
 	depends             []string
 }
 
-// State return current life phase.
-func State() stateT {
-	return stateT(atomic.LoadInt32(&lastState))
+// State return current life state.
+func State() StateT {
+	return StateT(atomic.LoadInt32(&lastState))
 }
 
-func setState(st stateT) {
+func setState(st StateT) {
 	// Must called inside `l.Lock()'
 	state = st
 	atomic.StoreInt32(&lastState, int32(st))
@@ -90,10 +103,10 @@ func setState(st stateT) {
 // Register a package, optionally includes depended packages. If not provides
 // depended package, it will run as registered order. Depends need not to be
 // exist, it will check and sort in Start().
-func Register(name string, onStart, onShutdown LifeCallback, depends ...string) {
+func Register(name string, onStart, onShutdown Callback, depends ...string) {
 	st := State()
 	if st != Initing {
-		log.Panicf("[%s] Can not register package \"%s\" in \"%s\" phase", tag, name, st)
+		log.Panicf("[%s] Can not register package \"%s\" in \"%s\" state", tag, name, st)
 	}
 
 	for _, p := range pkgs {
@@ -104,8 +117,8 @@ func Register(name string, onStart, onShutdown LifeCallback, depends ...string) 
 	pkgs = append(pkgs, &pkg{name, onStart, onShutdown, depends})
 }
 
-// Put phase to starting, Run all registered OnStart() functions, if all
-// succeed, move to running phase.
+// Start put state to starting, Run all registered OnStart() functions, if all
+// succeed, move to running state.
 // If any OnStart function panic, Start() won't recover, it is normal to panic
 // and exit the app during starting.
 func Start() {
@@ -131,7 +144,7 @@ func Start() {
 	}()
 
 	if state != Initing {
-		log.Panicf("[%s] Can not start in \"%s\" phase", tag, state)
+		log.Panicf("[%s] Can not start in \"%s\" state", tag, state)
 	}
 
 	callHooks(BeforeStarting)
@@ -155,7 +168,8 @@ func Start() {
 	}
 }
 
-// Put phase to shutdown, Run all registered OnShutdown() function in reserved order.
+// Shutdown put state to shutdown, Run all registered OnShutdown() function in
+// reserved order.
 func Shutdown() {
 	l.Lock()
 	defer func() {
@@ -176,7 +190,7 @@ func Shutdown() {
 	case Shutingdown:
 		log.Fatalf("[%s] corrupt internal state: %s", tag, state)
 	default:
-		// app can shutdown at any phase
+		// app can shutdown at any state
 		return
 	}
 
@@ -201,7 +215,7 @@ func Abort() {
 	Exit(12)
 }
 
-// Exit() exit the problem with n as exit code after executing all OnAbort
+// Exit the problem with n as exit code after executing all OnAbort
 // hooks. Like Abort() but can set exit code.
 func Exit(n int) {
 	callHooks(OnAbort)
@@ -209,7 +223,7 @@ func Exit(n int) {
 }
 
 // WaitToEnd block calling goroutine until safely Shutdown. Can only be called
-// in running and afterwards phase.
+// in running and afterwards state.
 func WaitToEnd() {
 	l.Lock()
 
@@ -230,7 +244,6 @@ func WaitToEnd() {
 func sortByDependency(pkgs []*pkg) []*pkg {
 	graph := topsort.NewGraph()
 	pkgMap := make(map[string]*pkg, len(pkgs))
-	added := make(map[string]bool)
 
 	for _, p := range pkgs {
 		pkgMap[p.name] = p
@@ -249,23 +262,8 @@ func sortByDependency(pkgs []*pkg) []*pkg {
 		}
 	}
 
-	result := make([]*pkg, 0, len(pkgs))
-	for _, p := range pkgs {
-		if noIncoming(pkgs, p) {
-			depends, err := graph.TopSort(p.name)
-			if err != nil {
-				log.Panicf("[%s] %v", tag, err)
-			}
-			for _, p := range depends {
-				if !added[p] {
-					result = append(result, pkgMap[p])
-					added[p] = true
-				}
-			}
-		}
-	}
-
-	if len(result) != len(pkgs) {
+	sortedPkgNames := doSort(graph)
+	if len(sortedPkgNames) != len(pkgs) {
 		msg := ""
 		for _, p := range pkgs {
 			if len(p.depends) != 0 {
@@ -274,6 +272,34 @@ func sortByDependency(pkgs []*pkg) []*pkg {
 		}
 		log.Panicf("[%s] Loop dependency detected%s", tag, msg)
 	}
+
+	result := make([]*pkg, 0, len(pkgs))
+	for _, pkgName := range sortedPkgNames {
+		result = append(result, pkgMap[pkgName])
+	}
+
+	return result
+}
+
+func doSort(g *topsort.Graph) []string {
+	result := make([]string, 0, len(pkgs))
+	added := make(map[string]bool, len(pkgs))
+	for _, p := range pkgs {
+		if noIncoming(pkgs, p) {
+			depends, err := g.TopSort(p.name)
+			if err != nil {
+				log.Panicf("[%s] %v", tag, err)
+			}
+
+			for _, p := range depends {
+				if !added[p] {
+					result = append(result, p)
+					added[p] = true
+				}
+			}
+		}
+	}
+
 	return result
 }
 

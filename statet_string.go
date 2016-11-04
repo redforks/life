@@ -8,8 +8,8 @@ const _stateT_name = "InitingStartingRunningShutingdownhalt"
 
 var _stateT_index = [...]uint8{0, 7, 15, 22, 33, 37}
 
-func (i stateT) String() string {
-	if i < 0 || i+1 >= stateT(len(_stateT_index)) {
+func (i StateT) String() string {
+	if i < 0 || i+1 >= StateT(len(_stateT_index)) {
 		return fmt.Sprintf("stateT(%d)", i)
 	}
 	return _stateT_name[_stateT_index[i]:_stateT_index[i+1]]

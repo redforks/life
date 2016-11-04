@@ -57,13 +57,13 @@ var _ = Describe("life", func() {
 		assertLog("pkg1\npkg2\n")
 	})
 
-	Context("Register() in wrong phase", func() {
+	Context("Register() in wrong state", func() {
 
 		It("Running", func() {
 			Start()
 			Ω(func() {
 				Register("pkg1", nil, nil)
-			}).Should(matcher.Panics("[life] Can not register package \"pkg1\" in \"Running\" phase"))
+			}).Should(matcher.Panics("[life] Can not register package \"pkg1\" in \"Running\" state"))
 		})
 
 		It("Starting", func() {
@@ -72,7 +72,7 @@ var _ = Describe("life", func() {
 			}, nil)
 			Ω(func() {
 				Start()
-			}).Should(matcher.Panics("[life] Can not register package \"pkg1\" in \"Starting\" phase"))
+			}).Should(matcher.Panics("[life] Can not register package \"pkg1\" in \"Starting\" state"))
 		})
 
 		It("Shutdown", func() {
@@ -82,7 +82,7 @@ var _ = Describe("life", func() {
 			Start()
 			Ω(func() {
 				Shutdown()
-			}).Should(matcher.Panics("[life] Can not register package \"pkg1\" in \"Shutingdown\" phase"))
+			}).Should(matcher.Panics("[life] Can not register package \"pkg1\" in \"Shutingdown\" state"))
 		})
 
 	})
