@@ -94,6 +94,21 @@ func State() StateT {
 	return StateT(atomic.LoadInt32(&lastState))
 }
 
+// EnsureState ensure current state is expected, panic with specific message if
+// failed.
+func EnsureState(exp StateT, msg string) {
+	if State() != exp {
+		log.Panic(msg)
+	}
+}
+
+// EnsureStatef ensure current state is expected, panic with formatted message
+// if failed.
+func EnsureStatef(exp StateT, format string, a ...interface{}) {
+	msg := fmt.Sprintf(format, a...)
+	EnsureState(exp, msg)
+}
+
 func setState(st StateT) {
 	// Must called inside `l.Lock()'
 	state = st

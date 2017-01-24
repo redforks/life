@@ -265,4 +265,24 @@ var _ = Describe("life", func() {
 
 	})
 
+	Context("EnsureState", func() {
+		It("Succeed", func() {
+			Ω(func() {
+				EnsureState(Initing, "msg")
+			}).ShouldNot(Panic())
+		})
+
+		It("Failed with message", func() {
+			Ω(func() {
+				EnsureState(Starting, "msg")
+			}).Should(matcher.Panics("msg"))
+		})
+
+		It("Failed with formatted message", func() {
+			Ω(func() {
+				EnsureStatef(Starting, "msg %s %d", "foo", 1)
+			}).Should(matcher.Panics("msg foo 1"))
+		})
+	})
+
 })
