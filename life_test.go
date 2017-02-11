@@ -220,16 +220,36 @@ var _ = Describe("life", func() {
 
 	})
 
-	It("Abort", func() {
-		RegisterHook("pkg1", 0, OnAbort, newLogFunc("foo"))
-		Abort()
-		assertLog("foo\nExit 12\n")
-	})
+	Context("Abort hooks", func() {
 
-	It("Exit", func() {
-		RegisterHook("pkg1", 0, OnAbort, newLogFunc("foo"))
-		Exit(100)
-		assertLog("foo\nExit 100\n")
+		It("Abort", func() {
+			RegisterHook("pkg1", 0, OnAbort, newLogFunc("foo"))
+			Abort()
+			assertLog("foo\nExit 12\n")
+		})
+
+		It("Exit", func() {
+			RegisterHook("pkg1", 0, OnAbort, newLogFunc("foo"))
+			Exit(100)
+			assertLog("foo\nExit 100\n")
+		})
+
+		It("Do not call aborts if already shutdown", func() {
+			RegisterHook("pkg1", 0, OnAbort, newLogFunc("foo"))
+			Shutdown()
+			Exit(100)
+			assertLog("Exit 100\n")
+		})
+
+		It("Call Abort on Abort", func() {
+			// Abort() calls Exit() internally, this test to ensure	even shutdown
+			// complete, call Abort() still triggers onAbort hooks
+			RegisterHook("pkg1", 0, OnAbort, newLogFunc("foo"))
+			Shutdown()
+			Abort()
+			assertLog("foo\nExit 12\n")
+		})
+
 	})
 
 	Context("Sort by dependency", func() {

@@ -236,7 +236,9 @@ func Abort() {
 // Exit the problem with n as exit code after executing all OnAbort
 // hooks. Like Abort() but can set exit code.
 func Exit(n int) {
-	callHooks(OnAbort)
+	if State() != Halt || n == 12 {
+		callHooks(OnAbort)
+	}
 	hal.Exit(n)
 }
 
